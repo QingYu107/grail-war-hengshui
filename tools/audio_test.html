@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>音频引擎临时测试台 · 圣杯战争·衡水</title>
+<style>
+  :root { --paper: #e9e2cf; --ink: #1b1f1c; --olive: #3d4a3f; --line: #8b8574; }
+  body {
+    margin: 0; padding: 28px 32px 60px; background: #232823; color: var(--paper);
+    font: 14px/1.7 "Georgia", "Songti SC", "SimSun", serif;
+  }
+  h1 { font-size: 19px; letter-spacing: .18em; font-weight: 400; margin: 0 0 4px; }
+  h2 { font-size: 13px; letter-spacing: .22em; color: #9aa294; font-weight: 400;
+       margin: 32px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #3a423a; }
+  .sub { color: #8d9487; font-size: 12px; letter-spacing: .08em; }
+  .bar { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 0; }
+  button {
+    font: inherit; font-size: 13px; padding: 6px 13px; cursor: pointer; color: var(--paper);
+    background: transparent; border: 1px solid var(--line); border-radius: 2px;
+    letter-spacing: .06em;
+  }
+  button:hover { background: #2f362f; }
+  button.on { background: var(--olive); border-color: var(--olive); color: #f3ecd8; }
+  #status { margin-top: 14px; padding: 10px 14px; background: #1b201b; border-left: 2px solid var(--olive);
+            font-size: 13px; color: #cfc9b4; letter-spacing: .04em; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid #333a33; vertical-align: top; }
+  th { color: #9aa294; font-weight: 400; letter-spacing: .12em; font-size: 12px; }
+  td.id { font-family: "Consolas", monospace; color: #b9c4b0; white-space: nowrap; }
+  td a { color: #b6c8a8; text-decoration: none; border-bottom: 1px dotted #566652; margin-right: 9px; }
+  td a:hover { color: #e9e2cf; }
+  .pending { color: #b0955e; }
+  input[type=range] { width: 160px; vertical-align: middle; }
+  .err { color: #c98a7a; }
+</style>
+</head>
+<body>
+
+<h1>音频引擎临时测试台</h1>
+<div class="sub">tools/audio_test.html — 只用于手动听感验收，不属于游戏本体</div>
+
+<div id="status">未初始化。点击「初始化」开始（浏览器要求先有用户手势）。</div>
+
+<div class="bar">
+  <button id="btnInit">初始化</button>
+  <button id="btnStop">停止</button>
+  <button id="btnMute">静音</button>
+  <label class="sub" style="align-self:center;margin-left:8px">音量</label>
+  <input id="vol" type="range" min="0" max="100" value="70">
+  <span id="volVal" class="sub">70</span>
+</div>
+
+<h2>场景主题（8）</h2>
+<div class="bar" id="scenes"></div>
+
+<h2>从者主题（9）</h2>
+<div class="bar" id="servants"></div>
+
+<h2>曲目映射 tracks</h2>
+<table>
+  <thead>
+    <tr><th>id</th><th>曲名</th><th>艺人 / 来源</th><th>为什么是这首</th><th>检索</th><th>候选文件</th></tr>
+  </thead>
+  <tbody id="rows"></tbody>
+</table>
+
+<div class="sub" style="margin-top:26px">
+  说明：真实音频按 <code>assets/audio/&lt;themeId&gt;.mp3</code> 探测，路径相对 <b>index.html 所在目录</b>。
+  本页在 tools/ 下，浏览器会去找 tools/assets/audio/，因此在本页听到的始终是程序化环境音——这是预期的，
+  真实文件请用根目录的 index.html 验证。
+</div>
+
+<script src="../js/audio.js"></script>
+<script>
+(function () {
+  'use strict';
+  var A = window.GrailAudio;
+  var statusEl = document.getElementById('status');
+  var currentBtn = null;
+
+  function setStatus(html) { statusEl.innerHTML = html; }
+  function esc(s) { return String(s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+
+  if (!A) {
+    setStatus('<span class="err">错误：js/audio.js 没有挂载 window.GrailAudio</span>');
+    return;
+  }
+
+  // ---- 状态回调：UI 跟着引擎走 ----
+  A.onStateChange(function (s) {
+    document.getElementById('vol').value = Math.round(s.volume * 100);
+    document.getElementById('volVal').textContent = Math.round(s.volume * 100);
+    document.getElementById('btnMute').classList.toggle('on', s.muted);
+    document.getElementById('btnMute').textContent = s.muted ? '已静音' : '静音';
+    if (currentBtn) currentBtn.classList.remove('on');
+    currentBtn = document.querySelector('button[data-theme="' + s.theme + '"]');
+    if (currentBtn) currentBtn.classList.add('on');
+    setStatus('已初始化：' + (s.available ? '是' : '否') +
+      ' ｜ 当前主题：<b>' + (s.theme || '无') + '</b>' +
+      ' ｜ 音量：' + Math.round(s.volume * 100) +
+      ' ｜ 静音：' + (s.muted ? '是' : '否'));
+  });
+
+  // ---- 按钮 ----
+  function makeBtn(container, id, label) {
+    var b = document.createElement('button');
+    b.textContent = label;
+    b.setAttribute('data-theme', id);
+    b.onclick = function () {
+      A.init();
+      A.play(id);
+    };
+    container.appendChild(b);
+    return b;
+  }
+
+  var sceneIds = ['title', 'quiz', 'daily', 'exam', 'battle', 'beast', 'ending_dark', 'ending_warm'];
+  var servantIds = ['saber', 'archer', 'lancer', 'rider', 'caster', 'assassin', 'berserker', 'ruler', 'foreigner'];
+  var sc = document.getElementById('scenes'), sv = document.getElementById('servants');
+
+  sceneIds.forEach(function (id) {
+    var d = A.themes[id];
+    makeBtn(sc, id, (d ? d.label : id) + ' · ' + id);
+  });
+  servantIds.forEach(function (id) {
+    var d = A.themes[id];
+    var secs = d ? (d.step * d.loop).toFixed(1) : '?';
+    makeBtn(sv, id, (d ? d.label : id) + ' · ' + secs + 's');
+  });
+
+  document.getElementById('btnInit').onclick = function () {
+    if (!A.init()) setStatus('<span class="err">AudioContext 创建失败（浏览器不支持或已被禁用）</span>');
+  };
+  document.getElementById('btnStop').onclick = function () { A.stop(); };
+  document.getElementById('btnMute').onclick = function () { A.toggleMute(); };
+  document.getElementById('vol').oninput = function (e) {
+    A.setVolume(Number(e.target.value) / 100);
+  };
+
+  // ---- 曲目表 ----
+  var rows = document.getElementById('rows');
+  A.tracks.forEach(function (t) {
+    var tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td class="id">' + esc(t.id) + '</td>' +
+      '<td>' + esc(t.title) + (t.alt ? '<br><span class="sub">备选：' + esc(t.alt) + '</span>' : '') + '</td>' +
+      '<td>' + esc(t.artist) + '</td>' +
+      '<td>' + esc(t.note) + (t.status === 'pending' ? ' <span class="pending">［待补］</span>' : '') + '</td>' +
+      '<td>' +
+        '<a href="' + t.links.netease + '" target="_blank" rel="noreferrer">网易云</a>' +
+        '<a href="' + t.links.qq + '" target="_blank" rel="noreferrer">QQ</a>' +
+        '<a href="' + t.links.bilibili + '" target="_blank" rel="noreferrer">B站</a>' +
+      '</td>' +
+      '<td class="id">' + esc(t.files.join(' / ')) + '</td>';
+    rows.appendChild(tr);
+  });
+})();
+</script>
+</body>
+</html>

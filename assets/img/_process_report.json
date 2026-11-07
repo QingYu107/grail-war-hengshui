@@ -1,0 +1,513 @@
+{
+ "servants": [
+  {
+   "id": "saber",
+   "name": "科比",
+   "file": "saber.jpg",
+   "faces": 0,
+   "stages": 0,
+   "manual": true,
+   "user": true,
+   "note": "用户指定素材：科比 蓝底黄衣正面半身，人工量框",
+   "box": [
+    224.7,
+    43.0,
+    275.2,
+    296.7
+   ],
+   "crop": [
+    79.2,
+    0.0,
+    566.2,
+    755.0
+   ],
+   "photo": 0.0,
+   "sharp": 112.1,
+   "quality": 0.0,
+   "quality_jpeg": 82,
+   "bytes": 142500,
+   "eyes": [
+    450.0,
+    238.2
+   ]
+  },
+  {
+   "id": "archer",
+   "name": "张雪峰",
+   "file": "archer.jpg",
+   "faces": 0,
+   "stages": 0,
+   "manual": true,
+   "user": true,
+   "note": "用户指定素材：张雪峰 黑板前指镜头，人工量框",
+   "box": [
+    227.1,
+    113.9,
+    227.8,
+    266.0
+   ],
+   "crop": [
+    0.0,
+    41.1,
+    682.0,
+    909.3
+   ],
+   "photo": 0.0,
+   "sharp": 8.6,
+   "quality": 0.0,
+   "quality_jpeg": 82,
+   "bytes": 134006,
+   "eyes": [
+    450.0,
+    222.4
+   ]
+  },
+  {
+   "id": "lancer",
+   "name": "侯国玉 / 电棍 otto",
+   "file": "09.jpg",
+   "faces": 3,
+   "stages": 0,
+   "manual": true,
+   "user": false,
+   "note": "AFTERSHOW 采访截图（1167×660），取彩色正脸，按框定位眼线",
+   "box": [
+    477.3,
+    83.2,
+    171.5,
+    172.3
+   ],
+   "crop": [
+    315.6,
+    0.0,
+    495.0,
+    660.0
+   ],
+   "photo": 0.0,
+   "sharp": 1039.7,
+   "quality": 0.0,
+   "quality_jpeg": 82,
+   "bytes": 137327,
+   "eyes": [
+    450.0,
+    264.0
+   ]
+  },
+  {
+   "id": "rider",
+   "name": "范小勤 / 小马云",
+   "file": "07.jpg",
+   "faces": 3,
+   "stages": 25,
+   "box": [
+    248.4,
+    62.9,
+    120.3,
+    120.3
+   ],
+   "crop": [
+    170.2,
+    0.0,
+    276.8,
+    369.0
+   ],
+   "photo": 0.401,
+   "sharp": 1342.4,
+   "quality": 3.219,
+   "quality_jpeg": 82,
+   "bytes": 159395,
+   "eyes": [
+    254.3,
+    345.5
+   ]
+  },
+  {
+   "id": "caster",
+   "name": "马保国",
+   "file": "00.jpg",
+   "faces": 3,
+   "stages": 0,
+   "manual": true,
+   "user": false,
+   "note": "正面大特写（右手伸向镜头），自动框落在鼻梁，按网格人工量框并下调眼框",
+   "box": [
+    144.8,
+    164.0,
+    265.2,
+    236.6
+   ],
+   "crop": [
+    15.6,
+    0.0,
+    523.5,
+    698.0
+   ],
+   "photo": 0.0,
+   "sharp": 103.3,
+   "quality": 0.0,
+   "quality_jpeg": 82,
+   "bytes": 141790,
+   "eyes": [
+    450.0,
+    428.4
+   ]
+  },
+  {
+   "id": "assassin",
+   "name": "周立齐 / 窃格瓦拉",
+   "file": "assassin.jpg",
+   "faces": 0,
+   "stages": 0,
+   "manual": true,
+   "user": true,
+   "note": "用户指定素材：周立齐 长发白衬衫（带「不可能打工的」字幕），人工量框",
+   "box": [
+    529.7,
+    125.1,
+    310.0,
+    444.6
+   ],
+   "crop": [
+    175.5,
+    0.0,
+    775.5,
+    1034.0
+   ],
+   "photo": 0.0,
+   "sharp": 16.2,
+   "quality": 0.0,
+   "quality_jpeg": 82,
+   "bytes": 134121,
+   "eyes": [
+    591.0,
+    331.0
+   ]
+  },
+  {
+   "id": "berserker",
+   "name": "虎哥与刀哥",
+   "file": "berserker.jpg",
+   "faces": 0,
+   "stages": 0,
+   "manual": true,
+   "user": true,
+   "note": "用户指定素材：虎哥刀哥并排，取两人脸框并集、黑框横跨两张脸（高度按两人眼线均值）",
+   "box": [
+    120.2,
+    161.9,
+    529.7,
+    284.6
+   ],
+   "crop": [
+    0.0,
+    0.0,
+    793.5,
+    1058.0
+   ],
+   "photo": 0.0,
+   "sharp": 7.8,
+   "quality": 0.0,
+   "quality_jpeg": 82,
+   "bytes": 134634,
+   "eyes": [
+    436.8,
+    299.8
+   ]
+  },
+  {
+   "id": "ruler",
+   "name": "孙笑川",
+   "file": "00.png",
+   "faces": 3,
+   "stages": 23,
+   "box": [
+    249.6,
+    58.2,
+    201.6,
+    201.6
+   ],
+   "crop": [
+    74.0,
+    0.0,
+    552.8,
+    737.0
+   ],
+   "photo": 0.382,
+   "sharp": 65.6,
+   "quality": 2.006,
+   "quality_jpeg": 82,
+   "bytes": 114446,
+   "eyes": [
+    285.9,
+    213.0
+   ]
+  },
+  {
+   "id": "foreigner",
+   "name": "丁真",
+   "file": "foreigner.jpg",
+   "faces": 0,
+   "stages": 0,
+   "manual": true,
+   "user": true,
+   "note": "用户指定素材：丁真 室内正面半身，裁切保住整颗头不切边",
+   "box": [
+    230.0,
+    275.1,
+    380.0,
+    375.1
+   ],
+   "crop": [
+    0.0,
+    87.0,
+    777.0,
+    1036.0
+   ],
+   "photo": 0.0,
+   "sharp": 5.8,
+   "quality": 0.0,
+   "quality_jpeg": 82,
+   "bytes": 138137,
+   "eyes": [
+    486.4,
+    374.3
+   ]
+  }
+ ],
+ "scenes": [
+  {
+   "id": "scene_gate",
+   "cn": "校门",
+   "file": "00.jpg",
+   "size": [
+    1500,
+    1000
+   ],
+   "sharp": 857.4,
+   "score": 2.425,
+   "quality_jpeg": 82,
+   "bytes": 128370
+  },
+  {
+   "id": "scene_corridor",
+   "cn": "走廊",
+   "file": "01.jpg",
+   "size": [
+    1024,
+    683
+   ],
+   "sharp": 363.6,
+   "score": 1.941,
+   "quality_jpeg": 82,
+   "bytes": 128328
+  },
+  {
+   "id": "scene_exam",
+   "cn": "考场",
+   "file": "05.jpg",
+   "size": [
+    1600,
+    1066
+   ],
+   "sharp": 549.2,
+   "score": 2.33,
+   "quality_jpeg": 82,
+   "bytes": 134170
+  },
+  {
+   "id": "scene_honor",
+   "cn": "光荣榜",
+   "file": "09.jpg",
+   "size": [
+    1024,
+    788
+   ],
+   "sharp": 555.0,
+   "score": 2.086,
+   "quality_jpeg": 82,
+   "bytes": 126005
+  },
+  {
+   "id": "scene_hill",
+   "cn": "荒山",
+   "file": "04.jpeg",
+   "size": [
+    3000,
+    1999
+   ],
+   "sharp": 1136.9,
+   "score": 2.483,
+   "quality_jpeg": 82,
+   "bytes": 137764
+  },
+  {
+   "id": "scene_radio",
+   "cn": "广播室",
+   "file": "08.jpg",
+   "size": [
+    860,
+    573
+   ],
+   "sharp": 1271.9,
+   "score": 1.94,
+   "quality_jpeg": 82,
+   "bytes": 133994
+  },
+  {
+   "id": "scene_canteen",
+   "cn": "食堂",
+   "file": "02.jpg",
+   "size": [
+    2048,
+    1536
+   ],
+   "sharp": 862.6,
+   "score": 2.39,
+   "quality_jpeg": 82,
+   "bytes": 140737
+  },
+  {
+   "id": "scene_roof",
+   "cn": "天台",
+   "file": "01.jpg",
+   "size": [
+    860,
+    573
+   ],
+   "sharp": 1617.1,
+   "score": 2.01,
+   "quality_jpeg": 82,
+   "bytes": 127176
+  },
+  {
+   "id": "scene_led",
+   "cn": "倒计时屏",
+   "file": "06.png",
+   "size": [
+    1318,
+    779
+   ],
+   "sharp": 2566.2,
+   "score": 2.53,
+   "quality_jpeg": 82,
+   "bytes": 129211
+  },
+  {
+   "id": "scene_track",
+   "cn": "跑道",
+   "file": "02.jpg",
+   "size": [
+    1024,
+    1024
+   ],
+   "sharp": 1626.6,
+   "score": 2.451,
+   "quality_jpeg": 82,
+   "bytes": 130046
+  },
+  {
+   "id": "scene_wall",
+   "cn": "围墙",
+   "file": "03.jpg",
+   "size": [
+    800,
+    600
+   ],
+   "sharp": 6667.3,
+   "score": 2.199,
+   "quality_jpeg": 82,
+   "bytes": 149339
+  },
+  {
+   "id": "scene_dorm",
+   "cn": "宿舍",
+   "file": "09.jpg",
+   "size": [
+    1080,
+    1920
+   ],
+   "sharp": 78.4,
+   "score": 1.09,
+   "quality_jpeg": 82,
+   "bytes": 132464
+  },
+  {
+   "id": "scene_arena",
+   "cn": "夜间操场看台",
+   "file": "00.jpg",
+   "size": [
+    860,
+    574
+   ],
+   "sharp": 7798.5,
+   "score": 2.262,
+   "quality_jpeg": 82,
+   "bytes": 131152
+  },
+  {
+   "id": "scene_beast",
+   "cn": "长走廊尽头",
+   "file": "01.jpg",
+   "size": [
+    1000,
+    667
+   ],
+   "sharp": 1136.3,
+   "score": 2.062,
+   "quality_jpeg": 82,
+   "bytes": 132634
+  },
+  {
+   "id": "scene_blackout",
+   "cn": "停电走廊",
+   "file": "00.jpg",
+   "size": [
+    790,
+    633
+   ],
+   "sharp": 1975.7,
+   "score": 2.078,
+   "quality_jpeg": 82,
+   "bytes": 112104
+  },
+  {
+   "id": "scene_roofnight",
+   "cn": "楼顶夜色",
+   "file": "05.jpg",
+   "size": [
+    2048,
+    1536
+   ],
+   "sharp": 246.5,
+   "score": 2.32,
+   "quality_jpeg": 82,
+   "bytes": 129692
+  },
+  {
+   "id": "scene_classroom_night",
+   "cn": "空教室夜",
+   "file": "06.jpg",
+   "size": [
+    860,
+    573
+   ],
+   "sharp": 2513.1,
+   "score": 2.149,
+   "quality_jpeg": 82,
+   "bytes": 138895
+  },
+  {
+   "id": "scene_hospital",
+   "cn": "校医室",
+   "file": "03.jpg",
+   "size": [
+    1080,
+    720
+   ],
+   "sharp": 270.0,
+   "score": 1.983,
+   "quality_jpeg": 82,
+   "bytes": 130678
+  }
+ ]
+}

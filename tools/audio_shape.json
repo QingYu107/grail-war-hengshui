@@ -1,0 +1,56 @@
+{
+ "keys": [
+  "init",
+  "play",
+  "stop",
+  "setVolume",
+  "getVolume",
+  "toggleMute",
+  "isMuted",
+  "current",
+  "tracks",
+  "servantTheme",
+  "available",
+  "onStateChange",
+  "themes",
+  "fileNames",
+  "fileUrl"
+ ],
+ "t0": {
+  "id": "archer",
+  "title": "念张师",
+  "artist": "luna",
+  "status": "ok",
+  "files": [
+   "archer.mp3",
+   "archer.m4a",
+   "archer.ogg"
+  ],
+  "links": {
+   "netease": "https://music.163.com/#/search/m/?s=%E5%BF%B5%E5%BC%A0%E5%B8%88",
+   "qq": "https://y.qq.com/n/ryqq/search?w=%E5%BF%B5%E5%BC%A0%E5%B8%88",
+   "bilibili": "https://search.bilibili.com/all?keyword=%E5%BF%B5%E5%BC%A0%E5%B8%88"
+  },
+  "note": "念白式旋律，句读短促，像他讲课时的语速与停顿。"
+ },
+ "n": 9,
+ "themes": [
+  "title",
+  "quiz",
+  "daily",
+  "exam",
+  "battle",
+  "beast",
+  "ending_dark",
+  "ending_warm",
+  "saber",
+  "archer",
+  "lancer",
+  "rider",
+  "caster",
+  "assassin",
+  "berserker",
+  "ruler",
+  "foreigner"
+ ]
+}

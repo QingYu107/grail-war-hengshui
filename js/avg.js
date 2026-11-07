@@ -1,0 +1,268 @@
+/* AVG 演出：打字机 + 关键节点特效卡 */
+(function () {
+  'use strict';
+
+  var skipping = false;
+  var typingTimer = null;
+
+  function d(n) { return Math.floor(Math.random() * n); }
+
+  /* ---------- 打字机 ---------- */
+  function typeParagraphs(container, texts, opts, done) {
+    if (!container || !container.isConnected) { if (done) done(); return; }
+    opts = opts || {};
+    var mult = 1;
+    try {
+      var sv = localStorage.getItem('grail_speed');
+      var timings = [1.9, 1, 0.55, 0];
+      if (sv != null && timings[+sv] != null) mult = timings[+sv];
+    } catch (e) {}
+    if (mult === 0) {
+      container.innerHTML = texts.map(function (t) { return '<p>' + t + '</p>'; }).join('');
+      if (done) done();
+      return { skip: function () {} };
+    }
+    var speed = Math.max(1, Math.round((opts.speed || 16) * mult));
+    var onDone = done || function () {};
+    container.innerHTML = '';
+    skipping = false;
+    var idx = 0;
+
+    function nextPara() {
+      if (skipping) {
+        container.innerHTML = texts.map(function (t) { return '<p>' + t + '</p>'; }).join('');
+        onDone(); return;
+      }
+      if (idx >= texts.length) { onDone(); return; }
+      var p = document.createElement('p');
+      p.className = 'typed';
+      container.appendChild(p);
+      var raw = texts[idx];
+      var i = 0;
+      typingTimer = setInterval(function () {
+        if (!p.isConnected) { clearInterval(typingTimer); return; }
+        if (skipping) {
+          clearInterval(typingTimer);
+          p.innerHTML = raw;
+          container.innerHTML = texts.map(function (t) { return '<p>' + t + '</p>'; }).join('');
+          onDone(); return;
+        }
+        i += 2;
+        p.innerHTML = raw.slice(0, i) + (i < raw.length ? '<span style="opacity:.35">▌</span>' : '');
+        if (i >= raw.length) {
+          clearInterval(typingTimer);
+          p.innerHTML = raw;
+          idx++;
+          setTimeout(nextPara, 90);
+        }
+      }, speed);
+    }
+    nextPara();
+    return { skip: skip };
+  }
+
+  function skip() {
+    skipping = true;
+    if (typingTimer) clearInterval(typingTimer);
+  }
+
+  /* ---------- 特效卡 ---------- */
+  var layer = null;
+
+  function ensureLayer(cls) {
+    removeLayer(true);
+    layer = document.createElement('div');
+    layer.className = 'fx-layer ' + cls;
+    // 兜底内联样式：即使 CSS 没加载，演出层也必须是全屏黑底
+    layer.style.cssText = 'position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;' +
+      'background:' + (cls === 'fx-summon' ? '#f4ecda' : '#0b0c0a') + ';opacity:1 !important;animation:none !important;' + 'transition:opacity .45s ease;';
+    document.body.appendChild(layer);
+    layer.addEventListener('pointerdown', function () { dismiss(); });
+    return layer;
+  }
+
+  function removeLayer(instant) {
+    if (!layer) return;
+    if (instant) { layer.remove(); layer = null; return; }
+    layer.classList.add('leaving');
+    var l = layer; layer = null;
+    setTimeout(function () { l.remove(); }, 460);
+  }
+
+  var dismissTimer = null;
+  function dismiss() {
+    if (dismissTimer) { clearTimeout(dismissTimer); dismissTimer = null; }
+    removeLayer(false);
+    if (layerDone) { var f = layerDone; layerDone = null; f(); }
+  }
+  var layerDone = null;
+
+  function schedule(ms, done) {
+    layerDone = done;
+    dismissTimer = setTimeout(function () {
+      removeLayer(false);
+      layerDone = null;
+      if (done) done();
+    }, ms);
+  }
+
+  function settleFx() {
+    var els = document.querySelectorAll('.fx-layer .t1, .fx-layer .t2, .fx-layer .t3, .fx-layer .msg, .fx-layer .line, .fx-layer .col span, .fx-layer .card');
+    for (var i = 0; i < els.length; i++) {
+      var el = els[i];
+      var op = window.getComputedStyle ? parseFloat(window.getComputedStyle(el).opacity) : 1;
+      if (!op) { el.style.animation = 'none'; el.style.opacity = '1'; el.style.transform = 'none'; }
+    }
+  }
+
+  function stinger(kind, data, done) {
+    data = data || {};
+    var el;
+    if (kind === 'broadcast') {
+      el = ensureLayer('fx-broadcast');
+      var lines = (data.lines || []).map(function (t, i) {
+        return '<div class="line' + (i === 0 ? ' big' : '') + '" style="animation-delay:' + (300 + i * 520) + 'ms">' + t + '</div>';
+      }).join('');
+      el.innerHTML = '<div class="scan"></div><div class="inner">' + lines + '</div>' +
+        '<div class="hint">点击任意处继续</div>';
+      schedule(700 + (data.lines || []).length * 520, done);
+    } else if (kind === 'summon') {
+      el = ensureLayer('fx-summon');
+      var S = (window.GRAIL_SUMMON || {})[data.id] || {};
+      var lines = S.lines || ['「你就是我的御主？」'];
+      var col = S.color || '#b23a2e';
+      var glyph = S.glyph || '';
+      el.style.background = '#08090a';
+      el.style.setProperty('--sig', col);
+      var lineHtml = lines.map(function (t, i) {
+        return '<div class="sline" style="animation-delay:' + (900 + i * 760) + 'ms">' + t + '</div>';
+      }).join('');
+      el.innerHTML =
+        '<div class="sigil"><i></i><i></i><i></i><b>' + glyph + '</b></div>' +
+        '<div class="flash"></div>' +
+        '<div class="inner">' +
+        '<div class="skicker">CONTRACT ／ 契约成立</div>' +
+        '<div class="name"><span class="cls">' + (data.cls || '') + '</span>' +
+        '<span class="n">' + (data.name || '') + '</span></div>' +
+        '<div class="stitle">' + (S.title || '') + '</div>' +
+        '<div class="slines">' + lineHtml + '</div>' +
+        '</div>' +
+        '<div class="hint">点击任意处继续</div>';
+      schedule(1200 + lines.length * 760, done);
+    } else if (kind === 'roll') {
+      el = ensureLayer('fx-roll');
+      var names = data.names || [];
+      var spans = names.map(function (n, i) {
+        return '<span style="animation-delay:' + (i * 90) + 'ms">' + n + '</span>';
+      }).join('');
+      el.innerHTML = '<div class="scan"></div><div><div class="col">' + spans + '</div>' +
+        '<div class="stop" style="animation-delay:' + (names.length * 90 + 400) + 'ms">本次月考，全校无一人异常</div></div>' +
+        '<div class="hint" style="position:absolute;bottom:6vh;left:0;right:0;text-align:center;font-family:var(--hei);font-size:11px;letter-spacing:.3em;color:rgba(232,224,204,.4)">点击继续</div>';
+      schedule(names.length * 90 + 2400, done);
+    } else if (kind === 'impact') {
+      el = ensureLayer('fx-impact');
+      el.classList.add('shake');
+      el.innerHTML = '<div class="boom">' + (data.title || '撞击') + '</div><div class="sub">' + (data.sub || '') + '</div>';
+      schedule(1700, done);
+    } else if (kind === 'glitch') {
+      el = ensureLayer('fx-glitch');
+      el.innerHTML = '<div class="grid"></div><div class="scan"></div><div class="msg">' + (data.msg || '') + '</div>' +
+        '<div class="hint" style="position:absolute;bottom:6vh;left:0;right:0;text-align:center;font-family:var(--hei);font-size:11px;letter-spacing:.3em;color:rgba(232,224,204,.4)">点击继续</div>';
+      schedule(data.dur || 3200, done);
+    } else if (kind === 'noble') {
+      el = ensureLayer('fx-noble');
+      el.style.setProperty('--sig', data.color || '#b23a2e');
+      var ttl = data.title || '宝具';
+      var chars = '';
+      for (var ci = 0; ci < 30; ci++) chars += '<span style="animation-delay:' + (ci * 0.16).toFixed(2) + 's">' + ttl.charAt(ci % ttl.length) + '</span>';
+      el.innerHTML =
+        '<svg class="warpdef" width="0" height="0" aria-hidden="true"><defs>' +
+        '<filter id="nobleWarp"><feTurbulence type="fractalNoise" baseFrequency="0.012 0.02" numOctaves="3" seed="5">' +
+        '<animate attributeName="baseFrequency" dur="9s" values="0.012 0.02;0.026 0.034;0.012 0.02" repeatCount="indefinite"/>' +
+        '</feTurbulence><feDisplacementMap in="SourceGraphic" scale="26" xChannelSelector="R" yChannelSelector="G"/></filter>' +
+        '</defs></svg>' +
+        '<div class="slash"></div><div class="ray"></div><div class="chars">' + chars + '</div>' +
+        '<div class="inner"><div class="k">真名解放 ／ TRUE NAME</div>' +
+        '<div class="c">' + (data.cls || '') + '</div>' +
+        '<div class="n"><span class="ghost" style="filter:url(#nobleWarp)">' + ttl + '</span>' +
+        '<span class="solid">' + ttl + '</span></div>' +
+        '<div class="s">' + (data.sub || '') + '</div></div>' +
+        '<div class="hint">点击继续</div>';
+      schedule(data.dur || 2600, done);
+    } else if (kind === 'beast') {
+      el = ensureLayer('fx-beast');
+      var title = data.title || '攀比';
+      // 一片一直在往下滚的名次，用来做「所有人都在排队」的底噪
+      var ranks = '';
+      for (var ri = 0; ri < 26; ri++) {
+        var n = 1 + ((ri * 7) % 97);
+        ranks += '<span style="animation-delay:' + (ri * 0.28).toFixed(2) + 's">' + n + '</span>';
+      }
+      el.innerHTML =
+        '<svg class="warpdef" width="0" height="0" aria-hidden="true"><defs>' +
+        '<filter id="beastWarp"><feTurbulence type="fractalNoise" baseFrequency="0.008 0.016" numOctaves="3" seed="11">' +
+        '<animate attributeName="baseFrequency" dur="11s" values="0.008 0.014;0.02 0.03;0.012 0.02;0.008 0.014" repeatCount="indefinite"/>' +
+        '</feTurbulence><feDisplacementMap in="SourceGraphic" scale="22" xChannelSelector="R" yChannelSelector="G"/></filter>' +
+        '<filter id="beastWarp2"><feTurbulence type="fractalNoise" baseFrequency="0.02 0.03" numOctaves="2" seed="3">' +
+        '<animate attributeName="baseFrequency" dur="7s" values="0.02 0.03;0.035 0.05;0.02 0.03" repeatCount="indefinite"/>' +
+        '</feTurbulence><feDisplacementMap in="SourceGraphic" scale="42" xChannelSelector="R" yChannelSelector="G"/></filter>' +
+        '</defs></svg>' +
+        '<div class="rings"></div>' +
+        '<div class="vignette"></div>' +
+        '<div class="grain"></div>' +
+        '<div class="rankfall">' + ranks + '</div>' +
+        '<div class="bigword"><span class="ghost" style="filter:url(#beastWarp2)">' + title + '</span>' +
+        '<span class="solid" style="filter:url(#beastWarp)">' + title + '</span></div>' +
+        '<div class="meta"><div class="kick">BEAST Ⅳ ／ 人类恶</div>' +
+        '<div class="line">显 现</div>' +
+        '<div class="q">' + (data.sub || '你是第几？') + '</div></div>';
+      schedule(data.dur || 5600, done);
+    } else {
+      if (done) done();
+    }
+    setTimeout(settleFx, 700);
+    setTimeout(settleFx, 1600);
+    try {
+      if (window.GrailAudio) {
+        window.GrailAudio.play(kind === 'beast' ? 'beast' : kind === 'glitch' ? 'beast' : kind === 'summon' ? 'battle' : 'daily');
+      }
+    } catch (e) {}
+  }
+
+  /* ---------- 故障闪：一次 0.3–0.9s 的画面撕裂，不挡操作 ---------- */
+  var burstCount = 0;
+  function glitchBurst(sceneKey, opts) {
+    opts = opts || {};
+    if (burstCount > 2) return;                     // 防止叠太多层
+    var dur = opts.dur || 520;
+    var l = document.createElement('div');
+    l.className = 'fx-burst' + (opts.hard ? ' hard' : '');
+    if (sceneKey) {
+      l.style.backgroundImage = 'url("assets/img/glitch/' + sceneKey + '_glitch.jpg")';
+      l.classList.add('with-img');
+    }
+    var t = document.createElement('i');
+    t.className = 'tex';
+    l.appendChild(t);
+    var bars = document.createElement('i');
+    bars.className = 'bars';
+    l.appendChild(bars);
+    l.style.setProperty('--dur', dur + 'ms');
+    document.body.appendChild(l);
+    burstCount++;
+    setTimeout(function () { l.remove(); burstCount--; }, dur + 140);
+    // 抖动页面正文，强化"信号不稳"
+    if (opts.shake !== false && document.body) {
+      document.body.classList.add('sig-shake');
+      setTimeout(function () { document.body.classList.remove('sig-shake'); }, Math.min(460, dur));
+    }
+  }
+
+  window.GrailAVG = {
+    typeParagraphs: typeParagraphs,
+    skip: skip,
+    stinger: stinger,
+    dismiss: dismiss,
+    glitchBurst: glitchBurst
+  };
+})();

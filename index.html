@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0d100f">
+<meta name="description" content="圣杯战争·衡水：凌晨四点的圣杯 —— COC 七版同人模组改编的档案式文字游戏">
+<title>圣杯战争 · 衡水：凌晨四点的圣杯</title>
+<link rel="stylesheet" href="assets/css/archive.css">
+<link rel="stylesheet" href="assets/css/avg.css">
+</head>
+<body>
+<script>
+/* ERRBANNER: 运行期错误可视化（正式环境也保留，出问题时能看见原因） */
+window.addEventListener('error', function (e) {
+  var d = document.getElementById('errbox') || (function () {
+    var x = document.createElement('div'); x.id = 'errbox';
+    x.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#8c2b22;color:#f4ecda;font:12px/1.7 monospace;padding:8px 12px;max-height:40vh;overflow:auto;white-space:pre-wrap';
+    document.body.appendChild(x); return x;
+  })();
+  d.textContent += '[JS] ' + (e.message || e.type) + ' @ ' + (e.filename || '').split('/').pop() + ':' + e.lineno + '\n';
+}, true);
+</script>
+<div id="app">
+
+  <!-- ================= 封面 ================= -->
+  <section class="screen is-active" id="screen-title">
+    <div class="paper cover">
+      <div class="holes"><i></i><i></i><i></i><i></i></div>
+      <div class="doc-head">
+        <span>冀州第一中学 · 教务处</span>
+        <span class="mid">圣杯战争 · 衡水 ｜ COC 7th 非官方同人模组</span>
+        <span class="no">编号 Ⅶ－0 1 7 8</span>
+      </div>
+
+      <div class="cover-grid">
+        <div>
+          <div class="kicker">FATE / HENGSHUI</div>
+          <h1 class="title">圣杯战争·衡水</h1>
+          <div class="subtitle">—— 凌晨四点的圣杯 ——</div>
+          <div class="rule-thick"></div>
+          <div class="rule-thin"></div>
+
+          <div class="lede">
+            <p>你们是冀州一中的学生和老师。你们的左手背上出现了一个奇怪的印记，它长得像你们学生证上的证件照。</p>
+            <p>凌晨四点，你们听见有人在广播里念一串名字——其中有一个是你自己的。</p>
+            <p>然后，一个死人站在你床边，用一种你非常熟悉的语气说：<em>「你就是我的御主？行吧。你告诉我，你想上哪个大学。」</em></p>
+            <p>你要活着毕业。你要赢下这场战争。这两件事的难度是同一件事。</p>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn--solid" id="btn-start">拆封档案</button>
+            <button class="btn" id="btn-continue">继续上次</button>
+            <button class="btn btn--ghost" id="btn-about">档案说明</button>
+            <button class="btn btn--ghost" id="btn-archive">档案馆</button>
+          </div>
+          <div id="start-note" style="margin-top:16px;font-family:var(--hei);font-size:11.5px;letter-spacing:.14em;color:var(--ink-3)"></div>
+        </div>
+
+        <div>
+          <div class="cover-meta">
+            <dl>
+              <dt>系统</dt><dd>COC 7th</dd>
+              <dt>人数</dt><dd>1（单人体验）</dd>
+              <dt>时长</dt><dd>7 天 / 约 40 分钟</dd>
+              <dt>分级</dt><dd>R-15</dd>
+              <dt>场地</dt><dd>冀州第一中学</dd>
+              <dt>时间</dt><dd>距高考 178 天</dd>
+              <dt>暗线</dt><dd>兽 · Ⅳ「攀比」</dd>
+            </dl>
+          </div>
+          <div class="big-seal">教务处<br>备案专用</div>
+          <div style="margin-top:26px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;line-height:1.9;color:var(--ink-3)">
+            距高考还有 178 天<br>
+            距圣杯战争还有 0 天
+          </div>
+        </div>
+      </div>
+
+      <div class="doc-foot">
+        <span>本文件为架空同人创作，人物与机构均为虚构谐仿</span>
+        <span>第 1 页 / 共 81 页</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 问卷 ================= -->
+  <section class="screen" id="screen-quiz">
+    <div class="paper" id="quiz-root"></div>
+  </section>
+
+  <!-- ================= 分配 ================= -->
+  <section class="screen" id="screen-assign">
+    <div class="paper" id="assign-root"></div>
+  </section>
+
+  <!-- ================= 正片 ================= -->
+  <section class="screen" id="screen-game">
+    <div class="paper">
+      <div class="doc-head">
+        <span id="game-day">DAY 1</span>
+        <span class="mid">冀州第一中学 · 圣杯战争监督记录</span>
+        <span class="no" id="game-clock">05:30</span>
+      </div>
+
+      <div class="hud" id="hud"></div>
+
+      <div class="game-grid">
+        <div id="story-root"></div>
+        <aside class="side" id="side">
+          <div class="side-toggle" id="side-toggle"><span>档 案 夹</span><span class="plus" id="side-mark">＋</span></div>
+          <div id="dossier"></div>
+        </aside>
+      </div>
+
+      <div class="doc-foot">
+        <span>教务处 · 备案</span>
+        <span id="game-foot">第 1 页 / 共 81 页</span>
+        <span>严禁外传</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 结局 ================= -->
+  <section class="screen" id="screen-ending">
+    <div class="paper" id="ending-root"></div>
+  </section>
+
+</div>
+
+<div class="battle-layer" id="battle-layer"></div>
+<div class="toast" id="toast"></div>
+<div class="audio-bar" id="audio-bar">
+  <button id="btn-mute" title="静音">♪</button>
+  <span class="now" id="audio-now">—</span>
+  <input id="vol" type="range" min="0" max="100" value="55" style="width:64px;accent-color:#b23a2e">
+</div>
+
+<script src="js/data/roster.js"></script>
+<script src="js/data/quiz.js"></script>
+<script src="js/data/story_prologue.js"></script>
+<script src="js/data/story_a.js"></script>
+<script src="js/data/story_b.js"></script>
+<script src="js/data/summon.js"></script>
+<script src="js/data/map.js"></script>
+<script src="js/data/exam.js"></script>
+<script src="js/data/npc_events.js"></script>
+<script src="js/data/codex.js"></script>
+<script src="js/data/endings.js"></script>
+<script src="js/data/endings_extra.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/avg.js"></script>
+<script src="js/data/bonds.js"></script>
+<script src="js/engine.js"></script>
+<script src="js/battle.js"></script>
+<script src="js/ui.js"></script>
+</body>
+</html>

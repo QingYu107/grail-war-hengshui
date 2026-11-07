@@ -1,0 +1,10 @@
+﻿# 忽略运行时产物
+tools/__pycache__/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+tools/.gh_token
+tools/.gh_device.json
+assets/img/_raw/
+tools/*.png
