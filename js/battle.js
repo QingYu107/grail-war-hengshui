@@ -213,6 +213,7 @@
         s.s.san = Math.max(0, s.s.san - out.sanLoss);
         G.Engine.addLog('你从 ' + foe.cls + ' 手里脱身了。');
       }
+      if (!out.died && s.s.hp <= 0) s.s.hp = 1;   // 没死就留一口气，不然下一场直接躺
       B.san = s.s.san;
       G.Engine.save();
       return out;

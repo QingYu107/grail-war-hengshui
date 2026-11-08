@@ -633,3 +633,34 @@ html, body { width: 100%; }
 .exam-row.no b { color: var(--red); }
 .exam-row i { font-style: normal; font-family: var(--mono); font-size: 10px; color: var(--ink-3); letter-spacing: .06em; }
 .exam-row em { font-style: normal; font-size: 11.5px; color: var(--ink-3); }
+
+
+/* 决定面板 */
+.dec-item {
+  font-family: var(--hei); font-size: 12px; letter-spacing: .06em; line-height: 1.9;
+  padding-left: 12px; position: relative; color: var(--ink-2); margin-bottom: 2px;
+}
+.dec-item::before {
+  content: '·'; position: absolute; left: 2px; color: var(--red); font-weight: 700;
+}
+
+/* 每日过场 */
+.day-card {
+  position: fixed; inset: 0; z-index: 92; background: #0a0908;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; animation: dayIn .5s ease both;
+}
+.day-card.out { animation: dayOut .6s ease both; }
+.day-card .dn {
+  font-family: var(--serif); font-weight: 900; font-size: clamp(40px, 9vw, 110px);
+  letter-spacing: .1em; color: #f2ead9;
+  text-shadow: 0 0 60px rgba(178,58,46,.45);
+}
+.day-card .dt {
+  font-family: var(--hei); font-size: 12px; letter-spacing: .4em; color: rgba(232,224,204,.62);
+}
+.day-card .dl {
+  font-family: var(--mono); font-size: 10.5px; letter-spacing: .24em; color: rgba(232,224,204,.34);
+}
+@keyframes dayIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes dayOut { to { opacity: 0 } }

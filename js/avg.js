@@ -48,6 +48,7 @@
           onDone(); return;
         }
         i += 2;
+        try { if (window.GrailSFX) window.GrailSFX.tick(); } catch (e) {}
         p.innerHTML = raw.slice(0, i) + (i < raw.length ? '<span style="opacity:.35">▌</span>' : '');
         if (i >= raw.length) {
           clearInterval(typingTimer);

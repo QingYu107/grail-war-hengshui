@@ -9,10 +9,21 @@
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
   function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
+  /* 关键词高亮：让正文有节奏，而不是一整块灰 */
+  var KW = ['倒数牌', '圣杯战争', '圣杯', '令咒', '灵体化', '真名', '宝具', '曝光', '扣分', '职阶', '御主', '从者'];
+  function markup(t) {
+    var s = String(t);
+    KW.forEach(function (k) {
+      s = s.split(k).join('<em class="kw">' + k + '</em>');
+    });
+    return s;
+  }
   function paras(arr, drop) {
     return (arr || []).map(function (t, i) {
       var cls = 'reveal' + (i === 0 && drop ? ' drop' : '');
-      return '<p class="' + cls + '" style="animation-delay:' + (i * 90) + 'ms">' + t + '</p>';
+      var raw = String(t).trim();
+      if (/^「[^「」]{2,}」$/.test(raw) || /^「[^「」]{2,}」[。！？…]?$/.test(raw)) cls += ' dialogue';
+      return '<p class="' + cls + '" style="animation-delay:' + (i * 90) + 'ms">' + markup(t) + '</p>';
     }).join('');
   }
   function settle() {
@@ -308,6 +319,11 @@
   /* ---------- HUD ---------- */
   function renderHud() {
     var s = E.state().s;
+    try {
+      document.body.classList.toggle('low-san', s.san <= 30);
+      document.body.classList.toggle('beast-near', s.beast >= 5);
+      document.body.classList.toggle('exp-hot', s.exposure >= 7);
+    } catch (e) {}
     var beastPips = '';
     for (var i = 0; i < 7; i++) beastPips += '<i class="' + (i < s.beast ? 'on' : '') + '"></i>';
     var expPips = '';
@@ -335,6 +351,11 @@
     d6a: 'assets/img/scene_radio.jpg', d6b: 'assets/img/scene_beast.jpg', d6c: 'assets/img/scene_arena.jpg',
     d7a: 'assets/img/scene_gate.jpg', d7b: 'assets/img/scene_arena.jpg', d7c: 'assets/img/scene_led.jpg'
   };
+
+  function recapLine(st) {
+    var logs = (st.log || []).filter(function (l) { return l.indexOf('情报') < 0; });
+    return logs.length ? logs[logs.length - 1] : '';
+  }
 
   function slotImage(slot, day) {
     return (slot && SLOT_IMG[slot.id]) || (day && day.scene) || '';
@@ -413,7 +434,8 @@
     root.innerHTML =
       '<div class="scene-head"><h2>' + esc(D.title) + '</h2><span class="meta">' + esc(slot.time) + '</span></div>' +
       '<div class="scene-place">' + esc(slot.place) + '</div>' +
-      (st.s.slot === 0 ? '<div class="card" style="margin-bottom:20px"><h3>今日校务日志</h3><p style="margin:0;font-size:13px;line-height:1.95;color:var(--ink-2)">' + esc(log) + '</p></div>' : '') +
+      (st.s.slot === 0 ? '<div class="card" style="margin-bottom:20px"><h3>今日校务日志</h3><p style="margin:0;font-size:13px;line-height:1.95;color:var(--ink-2)">' + esc(log) + '</p>' +
+        (recapLine(st) ? '<p style="margin:10px 0 0;font-family:var(--hei);font-size:11.5px;line-height:1.9;color:var(--ink-3)">上次记到这里：' + esc(recapLine(st)) + '</p>' : '') + '</div>' : '') +
       (slotImage(slot, D) ? '<div class="scene-img"><img loading="lazy" decoding="async" src="' + slotImage(slot, D) + '" alt="" onerror="this.parentNode.style.display=\'none\'"></div>' : '') +
       '<div class="prose" id="prose-box"></div>' +
       '<div class="choices" id="opts" style="margin-top:26px"></div>';
@@ -486,13 +508,14 @@
     if (o.battle) { startBattle(o); return; }
     if (o.exam) { startExam(o); return; }
     var st = E.state();
-    var before = { exp: st.s.exposure, beast: st.s.beast };
+    var before = { exp: st.s.exposure, beast: st.s.beast, san: st.s.san };
     ui.snapshot = clone(st);
     var out = resolve(o);
     ui.beat = out;
     renderBeat(out);
     try {
       var after = E.state().s;
+      moodFx(before, after);
       var jumped = after.exposure - before.exp >= 2 || after.beast > before.beast;
       if (window.GrailAVG && window.GrailAVG.glitchBurst && jumped) {
         setTimeout(function () { window.GrailAVG.glitchBurst(null, { dur: 380, shake: true }); }, 260);
@@ -635,6 +658,23 @@
     setTimeout(function () { l.remove(); if (done) done(); }, 980);
   }
 
+  function floatDmg(layer, n, who) {
+    if (n <= 0) return;
+    var d = document.createElement('div');
+    d.className = 'dmgfloat ' + who;
+    d.textContent = '−' + n;
+    var stage = layer.querySelector('.bstage');
+    if (!stage) return;
+    stage.appendChild(d);
+    try { if (window.GrailSFX) window.GrailSFX.stamp(); } catch (e) {}
+    var side = layer.querySelector(who === 'foe' ? '.bside.foe' : '.bside.me');
+    if (side) {
+      side.classList.add('hit');
+      setTimeout(function () { side.classList.remove('hit'); }, 300);
+    }
+    setTimeout(function () { d.remove(); }, 900);
+  }
+
   function nobleCut(sv, name) {
     try {
       if (window.GrailAudio) window.GrailAudio.play(sv.theme);
@@ -646,6 +686,8 @@
 
   function renderBattleScreen(o, B) {
     var st = B.state();
+    var prevFoeHp = (B._prevFoe == null) ? st.foeHp : B._prevFoe;
+    var prevMyHp = (B._prevMe == null) ? st.myHp : B._prevMe;
     var foe = B.foe;
     var layer = $('battle-layer');
     if (!layer) return;
@@ -694,6 +736,13 @@
         '</div>') +
       '</div>' +
       '</div>';
+
+    // 伤害飘字
+    try {
+      if (prevFoeHp > st.foeHp) floatDmg(layer, prevFoeHp - st.foeHp, 'foe');
+      if (prevMyHp > st.myHp) floatDmg(layer, prevMyHp - st.myHp, 'me');
+      B._prevFoe = st.foeHp; B._prevMe = st.myHp;
+    } catch (e) {}
 
     if (!st.over) {
       layer.querySelectorAll('.bmenu .btn').forEach(function (btn) {
@@ -1002,7 +1051,7 @@
 
     if (b.roll) {
       html += '<div class="dice"><span>检定 · ' + esc(b.roll.skill) + '</span>' +
-        '<span>1D100 = <b>' + b.roll.die + '</b></span>' +
+        '<span>1D100 = <b class="rollnum">' + b.roll.die + '</b></span>' +
         '<span>目标 ' + b.roll.target + '</span>' +
         '<span class="' + (b.roll.ok ? 'ok' : 'no') + ' lv">' + esc(b.roll.level) + '</span></div>';
     }
@@ -1033,10 +1082,83 @@
     var nb = el('button', 'btn btn--solid', '继续');
     nb.onclick = function () { advance(); };
     acts.appendChild(nb);
+    if (b.roll) rollAnim(root, b.roll);
+    maybeBark(root, E.state());
     renderHud();
     renderDossier();
     setTimeout(settle, 700);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  /* 从者插话：按状态挑一句，一场最多一次 */
+  var barkShown = {};
+  function barkFor(st) {
+    var all = (window.GRAIL_BARKS || {})[st.s.servantId];
+    if (!all || !all.length) return null;
+    var tags = ['any'];
+    if (st.s.san <= 35) tags.unshift('lowSan');
+    if (st.s.exposure >= 6) tags.unshift('highExp');
+    if (st.s.beast >= 4) unshiftSafe(tags, 'beast');
+    if (st.s.slot >= 2 || st.s.day >= 6) tags.push('night');
+    function unshiftSafe(a, v) { if (a.indexOf(v) < 0) a.unshift(v); }
+    var cand = all.filter(function (b) { return tags.indexOf(b.tag) >= 0 && !barkShown[b.t]; });
+    if (!cand.length) return null;
+    return cand[Math.floor(Math.random() * cand.length)];
+  }
+  function maybeBark(root, st) {
+    try {
+      if (Math.random() > 0.42) return;
+      var b = barkFor(st);
+      if (!b) return;
+      barkShown[b.t] = true;
+      var sv = G.servant(st.s.servantId);
+      var box = document.createElement('div');
+      box.className = 'bark';
+      box.innerHTML = '<span class="bhead">' + esc(sv.cls) + '</span>' +
+        '<span class="btalk">' + esc(b.t) + '</span>';
+      var anchor = root.querySelector('.prose') || root;
+      anchor.parentNode.insertBefore(box, anchor.nextSibling);
+      setTimeout(function () { box.classList.add('on'); }, 900);
+      try { if (window.GrailSFX) window.GrailSFX.page(); } catch (e) {}
+    } catch (e) {}
+  }
+
+  /* 骰子：先滚，再定格，成功/失败各给一声 */
+  function rollAnim(root, roll) {
+    var el = root.querySelector('.dice .rollnum');
+    if (!el) return;
+    var target = roll.die, k = 0;
+    try { if (window.GrailSFX) window.GrailSFX.dice(); } catch (e) {}
+    var t = setInterval(function () {
+      k++;
+      el.textContent = Math.floor(Math.random() * 100) + 1;
+      if (k >= 11) {
+        clearInterval(t);
+        el.textContent = target;
+        el.classList.add(roll.ok ? 'ok' : 'no');
+        try {
+          if (window.GrailSFX) window.GrailSFX[roll.ok ? 'success' : 'fail']();
+        } catch (e) {}
+      }
+    }, 60);
+  }
+
+  /* 情绪特效：血量、曝光、兽的变化给画面一点反馈 */
+  function moodFx(before, after) {
+    var body = document.body;
+    var hit = [];
+    if (before.san - after.san >= 4) hit.push('fx-san-hit');
+    if (after.exposure - before.exposure >= 2) hit.push('fx-exp-hit');
+    if (after.beast > before.beast) hit.push('fx-beast-hit');
+    if (!hit.length) return;
+    hit.forEach(function (c) { body.classList.add(c); });
+    try {
+      if (window.GrailSFX) {
+        if (before.san - after.san >= 4) window.GrailSFX.heartbeat();
+        if (after.beast > before.beast) window.GrailSFX.glitch();
+      }
+    } catch (e) {}
+    setTimeout(function () { hit.forEach(function (c) { body.classList.remove(c); }); }, 920);
   }
 
   function reroll(b) {
@@ -1060,6 +1182,19 @@
     // 去掉重掷按钮
     var acts = $('beat-actions');
     if (acts && acts.firstChild) acts.removeChild(acts.firstChild);
+  }
+
+  function dayCard(n, title) {
+    try {
+      var l = document.createElement('div');
+      l.className = 'day-card';
+      l.innerHTML = '<div class="dn">DAY ' + n + '</div><div class="dt">' + esc(title || '') + '</div>' +
+        '<div class="dl">距高考还有 ' + Math.max(0, 178 - n - 1) + ' 天</div>';
+      document.body.appendChild(l);
+      setTimeout(function () { l.classList.add('out'); }, 1150);
+      setTimeout(function () { l.remove(); }, 1750);
+      try { if (window.GrailSFX) window.GrailSFX.page(); } catch (e) {}
+    } catch (e) {}
   }
 
   function advance() {
@@ -1086,6 +1221,8 @@
         E.addLog('Day ' + prevDay + ' 结束：你踩住了刹车，兽没有动。');
       }
       if (st.s.day > 7) { finish(); return; }
+      var _nd = G.STORY[st.s.day];
+      dayCard(st.s.day, _nd ? _nd.title : '');
       if (st.s.beast >= 7) { finish(); return; }
       if (st.s.demerit >= 10) { st.s.demerit = 0; st.s.exposure = Math.min(10, st.s.exposure + 2); st.s.flags.parentMeetingNow = true; E.addLog('扣分满 10：家长会，曝光 +2'); }
       if (st.s.exposure >= 10) { finish(); return; }
@@ -1161,7 +1298,7 @@
       '<div style="font-family:var(--mono);font-size:10.5px;color:var(--ink-3)">' + esc(sv.alias) + '</div></div></div>';
 
     html += '<div class="side-card"><div class="tabs">' +
-      ['servant:从者', 'intel:情报', 'codex:词条', 'audio:音源', 'log:记录'].map(function (t) {
+      ['servant:从者', 'intel:情报', 'decision:决定', 'codex:词条', 'audio:音源', 'log:记录'].map(function (t) {
         var k = t.split(':')[0];
         return '<button data-tab="' + k + '" class="' + (ui.tab === k ? 'on' : '') + '">' + t.split(':')[1] + '</button>';
       }).join('') + '</div>';
@@ -1208,6 +1345,28 @@
       '<h5>在场御主</h5><p>' + st.s.alive + ' / 7　盟友 ' + st.s.allies + '</p>' +
       '<p style="color:var(--ink-3)">情报等级 Ⅰ 传闻 / Ⅱ 外观 / Ⅲ 真名 / Ⅳ 弱点 / Ⅴ 宝具。等级越高，那张脸越清楚。</p>';
     html += '<div class="tab-panel ' + (ui.tab === 'intel' ? 'on' : '') + '" data-panel="intel">' + intel + '</div>';
+
+    // 决定
+    var dec = '';
+    (function () {
+      var fl = st.s.flags || {};
+      var known = [];
+      Object.keys(fl).forEach(function (k) {
+        if (!fl[k]) return;
+        if (/^(seen_|ev_|visit_|free_|fx_|intelSeen_|bonddone_|beat_|exam)/.test(k)) return;
+        var lab = E.flagLabel(k);
+        if (lab && lab !== k) known.push(lab);
+      });
+      dec += '<h5>被记下来的</h5>';
+      dec += known.length
+        ? known.map(function (t) { return '<div class="dec-item">' + esc(t) + '</div>'; }).join('')
+        : '<p style="color:var(--ink-3)">还没有什么被写进档案。你做的每一件事，教务处都在看。</p>';
+      dec += '<h5>最近的动作</h5>' + ((st.log || []).slice(-8).reverse().map(function (l) {
+        return '<div class="log-line">' + esc(l) + '</div>';
+      }).join('') || '<p>暂无记录。</p>');
+      dec += '<p class="codex-tip">这些标记决定了结局判定：谁在场、门开没开、兽吃到了第几格。</p>';
+    })();
+    html += '<div class="tab-panel ' + (ui.tab === 'decision' ? 'on' : '') + '" data-panel="decision">' + dec + '</div>';
 
     // 词条（只显示已经接触到的部分，其余留占位）
     var cx = '';
