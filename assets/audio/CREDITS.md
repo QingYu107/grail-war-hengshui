@@ -1,8 +1,10 @@
 # assets/audio · 真 BGM 素材来源
 
-九骑主题曲的真人音源。全部从 B 站原投稿取**音频轨**，统一转成 60 秒 mp3 放在本目录根下，
+九骑主题曲的真人音源。全部从 B 站原投稿取**音频轨**，放在本目录根下，
 文件名与 `window.GrailAudio.tracks[i].id` 一一对应，`js/audio.js` 探测到同名文件就优先播放，
 探测不到则静默回落到程序化合成音。
+
+格式说明：其余七首是统一规格的 60 秒 mp3；`lancer` 与 `berserker` 两首改为整首 m4a（见第三节）。
 
 ## 一、处理规格
 
@@ -22,22 +24,29 @@
 | --- | --- | --- | --- | --- | --- | --- |
 | `saber` | 科比 | BV1ib421E7L5 | See you again，但是不墨迹直接二倍速（南局福段の喜鹊） | 00:00–01:00 | 961,094 B | yt-dlp bestaudio m4a（133 kbps） |
 | `archer` | 张雪峰 | BV1PSV86bEcj | “张雪峰老师 我还记得你.”｜《念张师》2.0x 氦气版（一支yuuu） | 00:00–01:00 | 961,090 B | yt-dlp bestaudio m4a（137 kbps） |
-| `lancer` | Otto / 侯国玉 | BV1Ta411T7E8 | 说的道理.wav（平胸的伊莉雅）※替源 | 00:03.10–01:03.10 | 961,092 B | yt-dlp bestaudio m4a（165 kbps） |
+| `lancer` | Otto / 侯国玉 | BV1XdgzzCEHt | 【补档】名为侯国玉 | 全长 45.21s，不裁剪 | 556,357 B（m4a） | yt-dlp bestaudio |
 | `rider` | 范小勤 | BV1Cm4y1g78g | 【范小勤】以父之名（小奇异风） | 00:00–01:00 | 961,092 B | yt-dlp bestaudio m4a（139 kbps） |
 | `caster` | 马保国 | BV1584y1N7cR | 马保国原版视频（定投印象） | 00:00–01:00 | 961,092 B | yt-dlp bestaudio m4a（97 kbps） |
 | `assassin` | 周立齐 | BV1Ds411Y72E | 【周某】我的看守所（OELoop） | 00:00–01:00 | 961,092 B | yt-dlp bestaudio m4a（191 kbps） |
-| `berserker` | 虎哥 & 刀哥 | BV1q34y187Vy | 《夏日漱石》东百MV（冷封同学）※替源 | 00:00–01:00 | 961,092 B | yt-dlp bestaudio m4a（130 kbps） |
+| `berserker` | 虎哥 & 刀哥 | BV1hT4y1v7Vg | 【补档】「因为你我会记住那一分钟」 | 全长 35.09s，不裁剪 | 1,411,235 B（m4a） | yt-dlp bestaudio |
 | `ruler` | 孙笑川 | BV1Ck4y197i1 | 孙笑川都干了哪些坏事？（肥宅界持刀人） | 00:00–01:00 | 961,092 B | yt-dlp bestaudio m4a（319 kbps） |
 | `foreigner` | 丁真 | BV1P94y167HS | 【补档2】《大家一起吸氧氧》《我现在肺痒痒》《吸羊羊之烟气冲天》（夜吟月寒丶） | 00:00–01:00 | 961,092 B | yt-dlp bestaudio m4a（216 kbps） |
 
-## 三、两处替源说明
+## 三、两首短曲的处理（Otto / 虎哥）
 
-指定 BV 里有两条投稿本身不足 60 秒，从头截满 60 秒取不出来，按「换同角色其他投稿」处理：
+这两首是原始指定曲，本身不到一分钟。第一版因为「每首必须截满 60 秒」的规格被换成了同角色的其他投稿；
+现在按作者要求换回原曲，规格改为**不裁剪、整首循环**：
 
-| 角色 | 原指定 BV | 原片长 | 问题 | 实际采用 |
+| 角色 | BV 号 | 原片长 | 处理 | 文件 |
 | --- | --- | --- | --- | --- |
-| lancer（Otto） | BV1XdgzzCEHt | 45.21s | 片长不足 60s，无法截满 | BV1Ta411T7E8（397.87s，同曲《说的道理》音源） |
-| berserker（虎哥 & 刀哥） | BV1hT4y1v7Vg | 35.09s | 片长不足 60s，无法截满 | BV1q34y187Vy（152.19s，《夏日漱石》东百MV） |
+| lancer（Otto） | BV1XdgzzCEHt | 45.21s | 保持原长，`<audio loop>` 无缝循环 | `lancer.m4a`（556,357 B，AAC） |
+| berserker（虎哥 & 刀哥） | BV1hT4y1v7Vg | 35.09s | 保持原长，`<audio loop>` 无缝循环 | `berserker.m4a`（1,411,235 B，AAC） |
+
+循环由 `js/audio.js` 的 `attachElement()` 设置 `el.loop = true` 完成，不改音频本体。
+
+> 这两首直接放的是 B 站原始 m4a（AAC），未转码 —— 容器内没有 ffmpeg。
+> `js/audio.js` 的扩展名候选顺序是 mp3 → m4a → ogg，探测逻辑用 HTTP 状态码判定，
+> 因此 `.m4a` 会被正常命中（已实测：`lancer.mp3 HEAD 404` → `lancer.m4a HEAD 200`）。
 
 两首均已在 `js/audio.js` 的 `tracks` 里把 `bv` 字段写成**实际使用的那条**，避免清单与音源对不上。
 

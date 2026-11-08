@@ -485,29 +485,74 @@
   function probeFile(id, done) {
     var cached = fileCache[id];
     if (cached && cached.state !== 'probing') { done(cached.url || null); return; }
-    if (cached) return;                            // 正在探测，等它自己回调
-    fileCache[id] = { state: 'probing', url: null };
+    if (cached) { cached.waiters.push(done); return; }   // 已经在探测：排队等结果
+    var entry = { state: 'probing', url: null, waiters: [done], log: [] };
+    fileCache[id] = entry;
     var names = fileNames(id), idx = 0;
-    function finish(url) {
-      fileCache[id] = url ? { state: 'ok', url: url } : { state: 'none', url: null };
-      done(url || null);
+    function log(t) { if (entry.log.length < 12) entry.log.push(t); }
+    function settle(url) {
+      if (entry.state !== 'probing') return;
+      entry.state = url ? 'ok' : 'none';
+      entry.url = url || null;
+      log('settle ' + (url || 'none'));
+      var ws = entry.waiters.slice();
+      entry.waiters.length = 0;
+      for (var i = 0; i < ws.length; i++) { try { ws[i](entry.url); } catch (e) {} }
     }
-    function tryNext() {
-      if (idx >= names.length || !PROBE_FILES) { finish(null); return; }
-      var url = AUDIO_DIR + names[idx++], el, settled = false, timer;
-      try { el = new Audio(); } catch (e) { finish(null); return; }
-      function cleanup() {
-        el.onerror = el.oncanplaythrough = null;
-        clearTimeout(timer);
-        try { el.src = ''; } catch (e2) { /* 忽略 */ }
+
+    /* http 下以 HTTP 状态码为准：这台设备的浏览器会把 404 响应当成「空媒体」，
+       readyState/duration/error 和真实的分段 mp4 完全一样，无法用 <audio> 区分。
+       file:// 下 fetch 不可用，退回解码探测（那边用 duration>0 判真）。 */
+    function nextName() {
+      if (!PROBE_FILES) { settle(null); return; }
+      if (idx >= names.length) { log('all miss'); settle(null); return; }
+      var url = AUDIO_DIR + names[idx++];
+      if (typeof fetch === 'function' && /^https?:/i.test(location.href)) {
+        var settledThis = false;
+        try {
+          fetch(url, { method: 'HEAD', cache: 'no-store' }).then(function (r) {
+            if (settledThis) return; settledThis = true;
+            log(url.split('/').pop() + ' HEAD ' + (r && r.status));
+            if (r && r.ok) settle(url); else nextName();
+          }).catch(function (e) {
+            if (settledThis) return; settledThis = true;
+            log(url.split('/').pop() + ' HEAD x ' + (e && e.message));
+            audioProbe(url, function (ok) { if (ok) settle(url); else nextName(); });
+          });
+        } catch (e) {
+          audioProbe(url, function (ok) { if (ok) settle(url); else nextName(); });
+        }
+        return;
       }
-      timer = setTimeout(function () { if (!settled) { settled = true; cleanup(); finish(null); } }, 4000);
-      el.oncanplaythrough = function () { if (!settled) { settled = true; cleanup(); finish(url); } };
-      el.onerror = function () { if (!settled) { settled = true; cleanup(); tryNext(); } };
-      try { el.preload = 'auto'; el.src = url; el.load(); }
-      catch (e) { if (!settled) { settled = true; cleanup(); tryNext(); } }
+      if (!audioProbe) { settle(null); return; }
+      audioProbe(url, function (ok) { if (ok) settle(url); else nextName(); });
     }
-    tryNext();
+
+    function audioProbe(url, cb) {
+      var el, finished = false, timer;
+      try { el = new Audio(); } catch (e) { cb(false); return; }
+      function hit() {
+        if (finished) return;
+        if (el.error) return;
+        if (!(el.duration > 0)) return;              // 只有真能读出时长才算数
+        finished = true; clearTimeout(timer);
+        try { el.onerror = el.onloadedmetadata = el.oncanplay = el.onloadeddata = null; el.src = ''; } catch (e) {}
+        cb(true);
+      }
+      function miss() {
+        if (finished) return;
+        finished = true; clearTimeout(timer);
+        try { el.onerror = el.onloadedmetadata = el.oncanplay = el.onloadeddata = null; el.src = ''; } catch (e) {}
+        cb(false);
+      }
+      el.onloadedmetadata = hit;
+      el.onloadeddata = hit;
+      el.oncanplay = hit;
+      el.onerror = miss;
+      timer = setTimeout(miss, 2500);
+      try { el.preload = 'auto'; el.src = url; el.load(); } catch (e) { miss(); }
+    }
+    nextName();
   }
   function elementVolume(layer) {
     if (layer.el) layer.el.volume = clamp((state.muted ? 0 : state.volume) * layer.elFade, 0, 1);
@@ -609,7 +654,24 @@
     emit();
     return true;
   }
+  /* 临时曲目：播 ms 毫秒后自动切回 backTo。
+     用于「遭遇某位从者时，他的主题响一下就退回去」这类演出。
+     期间如果游戏自己切了别的曲子，定时器自动作废，不会把画面音乐抢回来。 */
+  var tempTimer = null;
+  function clearTemp() { if (tempTimer) { clearTimeout(tempTimer); tempTimer = null; } }
+  function playTemp(themeId, ms, backTo) {
+    if (!themeId || !THEMES[themeId]) return false;
+    var prev = (backTo && THEMES[backTo]) ? backTo : state.theme;
+    clearTemp();
+    play(themeId);
+    tempTimer = setTimeout(function () {
+      tempTimer = null;
+      if (state.theme === themeId) play(prev || 'daily');
+    }, Math.max(400, ms || 5000));
+    return true;
+  }
   function stop() {
+    clearTemp();
     for (var i = layers.length - 1; i >= 0; i--) killLayer(layers[i], false);
     layers = []; state.theme = null; state.pending = null;
     emit();
@@ -684,14 +746,15 @@
 
   /* ---- 10. 导出 --------------------------------------------------------- */
   global.GrailAudio = {
-    init: init, play: play, stop: stop,
+    init: init, play: play, playTemp: playTemp, stop: stop,
     setVolume: setVolume, getVolume: getVolume,
     toggleMute: toggleMute, isMuted: isMuted, current: current,
     tracks: tracks, servantTheme: servantTheme,
     available: available, onStateChange: onStateChange,
     // 辅助接口，游戏不必须，调试 / 真机排查用
     themes: THEMES,
-    fileNames: fileNames,
+    fileNames: fileNames, probe: probeFile,
+    probeLog: function (id) { return fileCache[id] && fileCache[id].log; },
     fileUrl: function (id) { return fileCache[id] && fileCache[id].state === 'ok' ? fileCache[id].url : null; }
   };
 })(typeof window !== 'undefined' ? window : this);

@@ -8,6 +8,13 @@
 
   function $(id) { return document.getElementById(id); }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+  /* 正文白名单：数据里只允许 <span class="dialog"> 这一种行内标记。
+     先整体转义，再把白名单标签放回来 —— 别的尖括号仍旧当文本处理。 */
+  function rich(s) {
+    return esc(s)
+      .replace(/&lt;span class="dialog"&gt;/g, '<span class="dialog">')
+      .replace(/&lt;\/span&gt;/g, '</span>');
+  }
   function el(tag, cls, html) { var n = document.createElement(tag); if (cls) n.className = cls; if (html != null) n.innerHTML = html; return n; }
   /* 关键词高亮：让正文有节奏，而不是一整块灰 */
   var KW = ['倒数牌', '圣杯战争', '圣杯', '令咒', '灵体化', '真名', '宝具', '曝光', '扣分', '职阶', '御主', '从者'];
@@ -47,6 +54,19 @@
   function audio(theme) {
     try { if (window.GrailAudio) window.GrailAudio.play(theme); } catch (e) {}
   }
+  /* 场景 BGM：后段（Day 6 起）整体转成「异物」的底噪 */
+  function sceneTheme() {
+    var st = E.state();
+    return (st && st.s.day >= 6) ? 'beast' : 'daily';
+  }
+  /* 从者曲只属于宝具 / 召唤那一幕；离开那一幕就交还场景曲 */
+  function backToScene() {
+    try {
+      if (!window.GrailAudio) return;
+      var cur = window.GrailAudio.current();
+      if (cur && G.servant(cur)) audio(sceneTheme());
+    } catch (e) {}
+  }
   function clone(o) { return JSON.parse(JSON.stringify(o)); }
 
   /* ---------- 封面 ---------- */
@@ -83,7 +103,7 @@
           layer.remove();
         } else {
           if (E.load(n)) {
-            audio(G.servant(E.state().servantId).theme);
+            audio(sceneTheme());
             screen('screen-game');
             renderSlot();
             layer.remove();
@@ -167,7 +187,7 @@
     };
     $('btn-continue').onclick = function () {
       if (!E.load()) { toast('没有找到可继续的档案'); return; }
-      audio(G.servant(E.state().servantId).theme);
+      audio(sceneTheme());
       screen('screen-game'); renderSlot();
     };
     $('btn-about').onclick = function () { showAbout(); };
@@ -308,7 +328,7 @@
 
     $('btn-sign').onclick = function () {
       E.save();
-      audio(sv.theme);
+      audio(sceneTheme());
       screen('screen-game');
       renderSlot();
       toast('左手背上的印记开始发烫');
@@ -464,7 +484,7 @@
     });
 
     var probe = stingerFor(slot, st);
-    var introTexts = slot.intro.map(esc);
+    var introTexts = slot.intro.map(rich);
     var AVG = window.GrailAVG || {
       typeParagraphs: function (box, texts, o, done) {
         box.innerHTML = texts.map(function (t) { return '<p>' + t + '</p>'; }).join('');
@@ -487,7 +507,11 @@
     if (probe) {
       st.s.flags[probe.key] = true;
       E.save();
-      AVG.stinger(probe.cfg.kind, probe.data, startType);
+      AVG.stinger(probe.cfg.kind, probe.data, function () {
+        // Day 0 召唤：契约成立、正文出场的那一刻，从者的主题才响
+        if (probe.cfg.kind === 'summon') audio(G.servant(st.servantId).theme);
+        startType();
+      });
     } else {
       startType();
     }
@@ -504,9 +528,10 @@
   }
 
   function choose(o) {
-    if (o.id === 'd7c1') { renderWish(); return; }
+    if (o.id === 'd7c1') { backToScene(); renderWish(); return; }
     if (o.battle) { startBattle(o); return; }
-    if (o.exam) { startExam(o); return; }
+    if (o.exam) { backToScene(); startExam(o); return; }
+    backToScene();
     var st = E.state();
     var before = { exp: st.s.exposure, beast: st.s.beast, san: st.s.san };
     ui.snapshot = clone(st);
@@ -607,12 +632,12 @@
     var st = E.state();
     var ids = ['saber', 'archer', 'lancer', 'rider', 'caster', 'assassin', 'berserker', 'ruler', 'foreigner'];
     var pool = ids.filter(function (id) {
-      if (id === st.s.servantId) return false;
+      if (id === st.servantId) return false;
       if (st.s.flags['ally_' + id]) return false;
       if (st.s.flags['beat_' + id]) return false;
       return true;
     });
-    if (!pool.length) pool = ids.filter(function (id) { return id !== st.s.servantId; });
+    if (!pool.length) pool = ids.filter(function (id) { return id !== st.servantId; });
     // 偏一点：没解明的更容易撞上
     var unknown = pool.filter(function (id) { return (st.s.clues[id] || 0) < 3; });
     var from = unknown.length && Math.random() < 0.65 ? unknown : pool;
@@ -633,17 +658,16 @@
         allies: cfg.allies || 0,
         onEvent: function (kind, info) {
           if (kind === 'myNoble') nobleCut(info.me, info.name);
-          if (kind === 'foeNoble') {
-            try { if (window.GrailAudio) window.GrailAudio.play(info.foe.theme); } catch (e) {}
-            try {
-              if (window.GrailAVG && window.GrailAVG.glitchBurst) window.GrailAVG.glitchBurst('scene_arena', { dur: 700, hard: true });
-            } catch (e) {}
-          }
+          // 敌方开宝具（包括兽「借用」别人的宝具）：同样要出宝具画面 + 对应曲，
+          // 并且一直响到下一次宝具或这场战斗结束。
+          if (kind === 'foeNoble') nobleCut(info.foe, info.name);
         }
       });
     } catch (e) { fatal(e); return; }
     B_ACTIVE = B;
     ui.beat = { o: o, paras: cfg.intro || ['你先动了手。'], notes: [], roll: null, ok: true, battle: true };
+    // 遭遇战：切到战斗曲；开宝具时会被对应从者的主题顶掉，结算时再交还场景曲
+    audio('battle');
     battleTransition(function () { renderBattleScreen(o, B); });
   }
 
@@ -756,6 +780,8 @@
     }
 
     var out = B.settle();
+    // 战斗结束：宝具曲到此为止，画面回到场景的底噪
+    try { if (window.GrailAudio) window.GrailAudio.play(sceneTheme()); } catch (e) {}
     var isBeast = foe.id === 'beast';
     var res = st.over === 'win'
       ? (isBeast
@@ -936,6 +962,14 @@
 
   function evOk(e, st) {
     if (!e) return false;
+    // 自身冲突：你已经拿到的这张人物卡会在地图上和你自己对话（李嘉豪在车棚遇见李嘉豪）。
+    // 事件的 who 是御主名，玩家自己的御主卡就是 masterId 对应的那位。
+    if (e.who) {
+      var meMaster = G.master(st.masterId);
+      if (meMaster && meMaster.name === e.who) return false;
+      // 已经退场的人不会再出现在地图上
+      if (st.s.flags['gone_' + e.who]) return false;
+    }
     if (e.once && st.s.flags['ev_' + e.id]) return false;
     if (e.day && (st.s.day < e.day[0] || st.s.day > e.day[1])) return false;
     if (e.req && e.req.flag && !st.s.flags[e.req.flag]) return false;
@@ -1017,12 +1051,10 @@
     var st = E.state();
     var clue = out.clue;
     // 事件相关的从者 BGM：拿到情报就让那个人「响一下」
-    if (clue && window.GrailAudio) {
-      try { window.GrailAudio.play(clue.id); } catch (e) {}
-    }
+    sightingBgm(clue);
     var _po = ((window.GRAIL_MAP || {}).places || []).filter(function (x) { return x.id === pid; })[0] || { name: '' };
     var html = '<div class="scene-head"><h2>' + esc(_po.name) + '</h2><span class="meta">自由行动</span></div>' +
-      '<div class="prose">' + paras(out.paras.map(esc), true) + '</div>' +
+      '<div class="prose">' + paras(out.paras.map(rich), true) + '</div>' +
       (out.roll ? '<div class="dice"><span>检定 · ' + esc(out.roll.skill) + '</span><span>1D100 = <b>' + out.roll.die + '</b></span>' +
         '<span>目标 ' + out.roll.target + '</span><span class="' + (out.roll.ok ? 'ok' : 'no') + ' lv">' + esc(out.roll.level) + '</span></div>' : '') +
       (out.notes && out.notes.length ? '<div class="effects">' + out.notes.map(function (n) {
@@ -1047,7 +1079,7 @@
     var slot = currentSlot();
     var root = $('story-root');
     var html = '<div class="scene-head"><h2>' + esc(slot.place) + '</h2><span class="meta">' + esc(slot.time) + '</span></div>' +
-      '<div class="prose">' + paras(b.paras.map(esc), true) + '</div>';
+      '<div class="prose">' + paras(b.paras.map(rich), true) + '</div>';
 
     if (b.roll) {
       html += '<div class="dice"><span>检定 · ' + esc(b.roll.skill) + '</span>' +
@@ -1056,6 +1088,7 @@
         '<span class="' + (b.roll.ok ? 'ok' : 'no') + ' lv">' + esc(b.roll.level) + '</span></div>';
     }
     if (b.clue) {
+      sightingBgm(b.clue);
       var sv2 = G.servant(b.clue.id);
       var lv2 = Math.min(b.clue.lv, 5);
       var iv = intelView(b.clue.id, lv2);
@@ -1090,10 +1123,20 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  /* 遭遇某位从者时的专属曲：只在他被解明到三阶段（真名推定）后响五秒
+     —— 免得一进图就有一堆人抢着放歌。 */
+  function sightingBgm(clue) {
+    if (!clue || !clue.id) return;
+    if ((clue.lv || clue.level || 0) < 3) return;
+    try {
+      if (window.GrailAudio && window.GrailAudio.playTemp) window.GrailAudio.playTemp(clue.id, 5000, sceneTheme());
+    } catch (e) {}
+  }
+
   /* 从者插话：按状态挑一句，一场最多一次 */
   var barkShown = {};
   function barkFor(st) {
-    var all = (window.GRAIL_BARKS || {})[st.s.servantId];
+    var all = (window.GRAIL_BARKS || {})[st.servantId];
     if (!all || !all.length) return null;
     var tags = ['any'];
     if (st.s.san <= 35) tags.unshift('lowSan');
@@ -1111,7 +1154,7 @@
       var b = barkFor(st);
       if (!b) return;
       barkShown[b.t] = true;
-      var sv = G.servant(st.s.servantId);
+      var sv = G.servant(st.servantId);
       var box = document.createElement('div');
       box.className = 'bark';
       box.innerHTML = '<span class="bhead">' + esc(sv.cls) + '</span>' +
@@ -1213,6 +1256,22 @@
       var prevDay = st.s.day;
       st.s.day++;
       st.s.slot = 0;
+      // 睡一觉：跨天把 HP 与 MP 补满。
+      // 之前完全没有恢复手段，前一天的惨胜会一路带到决战，等于必死。
+      var goneList = Object.keys(st.s.flags).filter(function (k) { return k.indexOf('gone_') === 0; });
+      var goneNow = goneList.length;
+      if (goneNow > (st.s.goneSeen || 0)) {
+        var newest = goneList[goneList.length - 1].replace('gone_', '');
+        E.addLog('点名：' + newest + ' 没有答到。在场御主 ' + st.s.alive + ' / 7。');
+        st.s.flags.pointMissingName = newest;
+      }
+      st.s.goneSeen = goneNow;
+      var hpBack = st.s.hpMax - st.s.hp, mpBack = st.s.mpMax - st.s.mp;
+      st.s.hp = st.s.hpMax;
+      st.s.mp = st.s.mpMax;
+      if (hpBack > 0 || mpBack > 0) {
+        E.addLog('你睡了一觉。HP +' + hpBack + '，MP +' + mpBack + '。');
+      }
       // 夜晚填格：这一天如果你什么都没踩住，就 +1（序章之夜不计）
       if (prevDay >= 1 && st.s.beastCutDay !== prevDay) {
         st.s.beast = Math.min(7, st.s.beast + 1);
@@ -1436,7 +1495,7 @@
       (logs || '<p>暂无记录。</p>') + '</div></div>';
 
     html += '<div class="side-card"><div class="body" style="font-family:var(--hei);font-size:11px;letter-spacing:.1em;color:var(--ink-3)">' +
-      '御主 ' + esc(m.name) + '　｜　' + esc(r.name) + '线<br>' +
+      '御主 ' + esc(m.name) + '　｜　' + esc(r.name) + '线　｜　在场 ' + st.s.alive + '/7<br>' +
       '<button id="btn-save" style="all:unset;cursor:pointer;border-bottom:1px solid var(--line);margin-top:8px;display:inline-block">手动存档</button>　' +
       '<button id="btn-speed" style="all:unset;cursor:pointer;border-bottom:1px solid var(--line);margin-left:10px">文字：' + speedLabel() + '</button>　' +
       '<button id="btn-quit" style="all:unset;cursor:pointer;border-bottom:1px solid var(--line)">回到封面</button>' +
@@ -1462,6 +1521,10 @@
     var epi = '';
     if (CODEX.epilogues && CODEX.epilogues[id]) epi = CODEX.epilogues[id];
     var sv = G.servant(st.servantId), m = G.master(st.masterId);
+    // 结局加厚：数据在 endings_extra.js 的 GRAIL_ENDING_EXTRA，这里取值（原来直接引用裸变量会 ReferenceError）
+    var EX = window.GRAIL_ENDING_EXTRA || { after: {}, byServant: {} };
+    var extraAfter = (EX.after && EX.after[id]) || [];
+    var extraServant = (EX.byServant && EX.byServant[st.servantId]) || '';
 
     // 结案前：一次重故障，把「档案」撕开
     try {
@@ -1490,6 +1553,11 @@
       '<tr><td>曝光度</td><td>' + st.s.exposure + ' / 10</td></tr>' +
       '<tr><td>兽 · Ⅳ 进度</td><td>' + st.s.beast + ' / 7</td></tr>' +
       '<tr><td>令咒剩余</td><td>' + st.s.command + ' / 3</td></tr>' +
+      '<tr><td>在场御主</td><td>' + st.s.alive + ' / 7' + (function () {
+        var gone = Object.keys(st.s.flags).filter(function (k) { return k.indexOf('gone_') === 0; })
+          .map(function (k) { return k.replace('gone_', ''); });
+        return gone.length ? '（退场：' + gone.join('、') + '）' : '';
+      })() + '</td></tr>' +
       '<tr><td>掌握的真名</td><td>' + Object.keys(st.s.clues).filter(function (k) { return st.s.clues[k] >= 3; }).length + ' / 8</td></tr>' +
       '<tr><td>御主 · 从者</td><td>' + esc(m.name) + ' ／ ' + esc(sv.name) + '</td></tr>' +
       '</table>' +
@@ -1724,6 +1792,17 @@
     try { devHook(); } catch (e) { fatal(e); }
     window.addEventListener('beforeunload', function () { try { if (E.state()) E.save(); } catch (e) {} });
   }
+
+  /* 调试出口：本地排查 / 自动化验证用，正常流程不依赖它。
+     只暴露既有函数引用，不改变任何行为。 */
+  window.GRAIL_DEBUG = {
+    screen: screen, renderSlot: renderSlot, renderMapScreen: renderMapScreen,
+    enterPlace: enterPlace, pickMapEvent: pickMapEvent, evOk: evOk,
+    finish: finish, nobleCut: nobleCut, audio: audio, rich: rich, paras: paras,
+    startBattle: startBattle, renderDossier: renderDossier,
+    advance: advance, advanceDay: advanceDay, apply: function (fx) { return E.apply(fx); },
+    state: function () { return E.state(); }
+  };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

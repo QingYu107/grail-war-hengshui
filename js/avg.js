@@ -17,8 +17,11 @@
       var timings = [1.9, 1, 0.55, 0];
       if (sv != null && timings[+sv] != null) mult = timings[+sv];
     } catch (e) {}
-    if (mult === 0) {
+    function flushAll() {
       container.innerHTML = texts.map(function (t) { return '<p>' + t + '</p>'; }).join('');
+    }
+    if (mult === 0) {
+      flushAll();
       if (done) done();
       return { skip: function () {} };
     }
@@ -28,31 +31,59 @@
     skipping = false;
     var idx = 0;
 
-    function nextPara() {
-      if (skipping) {
-        container.innerHTML = texts.map(function (t) { return '<p>' + t + '</p>'; }).join('');
-        onDone(); return;
+    /* 正文里可能有 <span class="dialog"> 这类行内标记：
+       先把结构一次建好，再按字符往各个文本节点里回填，
+       这样逐字效果不会把标签从中间截断（截断后浏览器会把半截标签当文字显示）。 */
+    function collect(p) {
+      var walker = document.createTreeWalker(p, 4 /* SHOW_TEXT */, null, false);
+      var parts = [], total = '', n;
+      while ((n = walker.nextNode())) {
+        parts.push({ node: n, full: n.nodeValue || '' });
+        total += (n.nodeValue || '');
       }
+      for (var k = 0; k < parts.length; k++) parts[k].node.nodeValue = '';
+      return { parts: parts, total: total };
+    }
+    function fill(parts, n) {
+      var left = n;
+      for (var k = 0; k < parts.length; k++) {
+        var it = parts[k], take = Math.max(0, Math.min(it.full.length, left));
+        left -= take;
+        if (it.node.nodeValue.length !== take) it.node.nodeValue = it.full.slice(0, take);
+      }
+    }
+
+    function nextPara() {
+      if (skipping) { flushAll(); onDone(); return; }
       if (idx >= texts.length) { onDone(); return; }
       var p = document.createElement('p');
       p.className = 'typed';
       container.appendChild(p);
       var raw = texts[idx];
+      p.innerHTML = raw;
+      var job = collect(p);
+      var parts = job.parts, total = job.total;
+      var caret = document.createElement('span');
+      caret.className = 'caret';
+      caret.style.opacity = '.35';
+      caret.textContent = '▌';
+      p.appendChild(caret);
       var i = 0;
       typingTimer = setInterval(function () {
         if (!p.isConnected) { clearInterval(typingTimer); return; }
         if (skipping) {
           clearInterval(typingTimer);
-          p.innerHTML = raw;
-          container.innerHTML = texts.map(function (t) { return '<p>' + t + '</p>'; }).join('');
+          if (caret.parentNode) caret.parentNode.removeChild(caret);
+          flushAll();
           onDone(); return;
         }
         i += 2;
         try { if (window.GrailSFX) window.GrailSFX.tick(); } catch (e) {}
-        p.innerHTML = raw.slice(0, i) + (i < raw.length ? '<span style="opacity:.35">▌</span>' : '');
-        if (i >= raw.length) {
+        fill(parts, i);
+        if (i >= total.length) {
           clearInterval(typingTimer);
-          p.innerHTML = raw;
+          fill(parts, total.length);
+          if (caret.parentNode) caret.parentNode.removeChild(caret);
           idx++;
           setTimeout(nextPara, 90);
         }
@@ -223,9 +254,13 @@
     }
     setTimeout(settleFx, 700);
     setTimeout(settleFx, 1600);
+    /* 演出卡的配乐：只接管「异物」类的两种。
+       宝具卡不能动音乐 —— 它刚由调用方播了对应从者的主题；
+       召唤卡的曲子在演出结束、正文出场时才由 ui 接上；
+       广播 / 点名 / 撞击这些只是画面，沿用当前场景曲。 */
     try {
-      if (window.GrailAudio) {
-        window.GrailAudio.play(kind === 'beast' ? 'beast' : kind === 'glitch' ? 'beast' : kind === 'summon' ? 'battle' : 'daily');
+      if (window.GrailAudio && (kind === 'beast' || kind === 'glitch')) {
+        window.GrailAudio.play('beast');
       }
     } catch (e) {}
   }

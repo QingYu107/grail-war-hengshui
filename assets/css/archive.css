@@ -664,3 +664,40 @@ html, body { width: 100%; }
 }
 @keyframes dayIn { from { opacity: 0 } to { opacity: 1 } }
 @keyframes dayOut { to { opacity: 0 } }
+
+
+/* ==========================================================================
+   手机适配补丁（真机 420×933 / 412×915 等窄屏）
+   目的：正文可读、触控目标够大、底部不被浏览器工具栏压住、配图不占满整屏
+   ========================================================================== */
+@media (max-width: 960px) {
+  /* 正文：实测过 14.4px 偏小，统一顶到 16px，行高略收一点换行数 */
+  /* 注意：部分手机浏览器开了「网页字号 90%」，实测 16px 会显示成 14.4px。
+     这里按 16.5px 给，90% 下约 14.85px，100% 下 16.5px，两头都能读。 */
+  .paper .prose,
+  .paper .prose p,
+  .prose .typed { font-size: 16.5px; line-height: 1.95; }
+
+  /* 底部留白要同时算上浏览器工具栏和安全区，否则最后的按钮永远差一截 */
+  #app { padding-bottom: calc(104px + env(safe-area-inset-bottom)); }
+  .screen { padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
+
+  /* 触控目标：选项和按钮不小于 48px */
+  .choice { min-height: 58px; }
+  .btn { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; }
+
+  /* 场景配图别一屏占满，正文要能露出来 */
+  .scene-img img { max-height: 42vh; object-fit: cover; }
+
+  /* 选项里的长标签允许换行（之前 nowrap 会把字挤出屏幕） */
+  .choice, .choice span, .choice .sub { white-space: normal; }
+
+  /* 抽屉展开时盖住底部操作区，加一层内边距避免误触 */
+  .side.open { padding-bottom: calc(20px + env(safe-area-inset-bottom)); }
+}
+
+@media (max-width: 430px) {
+  .paper .prose, .paper .prose p, .prose .typed { font-size: 16.5px; line-height: 1.92; }
+  .doc-head { font-size: 9px; }
+  .scene-img img { max-height: 36vh; }
+}

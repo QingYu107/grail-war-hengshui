@@ -201,6 +201,14 @@
         out.sanLoss = d(4);
         s.s.san = Math.max(0, s.s.san - out.sanLoss);
         s.s.flags['beat_' + opts.foeId] = true;
+        // 战后喘息：赢下来的人也不该带着 1 点 HP 走回教室
+        var hpGain = Math.ceil(s.s.hpMax * 0.35), mpGain = Math.ceil(s.s.mpMax * 0.45);
+        var hpBefore = s.s.hp, mpBefore = s.s.mp;
+        s.s.hp = Math.min(s.s.hpMax, s.s.hp + hpGain);
+        s.s.mp = Math.min(s.s.mpMax, s.s.mp + mpGain);
+        if (s.s.hp > hpBefore || s.s.mp > mpBefore) {
+          G.Engine.addLog('你靠着墙喘了一会儿。HP +' + (s.s.hp - hpBefore) + '，MP +' + (s.s.mp - mpBefore) + '。');
+        }
         G.Engine.addLog('你打赢了 ' + foe.cls + '，情报升到 ' + G.Engine.roman(nv) + '。');
       } else if (B.over === 'lose') {
         out.sanLoss = d(10) + 2;
