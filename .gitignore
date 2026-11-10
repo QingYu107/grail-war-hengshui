@@ -11,3 +11,5 @@ tools/*.png
 
 # 本地调试脚手架（服务 + 注入钩子，不随仓库分发）
 .dev/
+
+docs/module_raw.txt

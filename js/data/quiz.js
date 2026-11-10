@@ -6,6 +6,41 @@
 
   var QUIZ = [
     {
+      id: 'q0', no: '第零问', title: '登记之前，先填身份。你在这所学校里是谁？', hint: '身份决定你能进哪扇门。',
+      options: [
+        {
+          key: 'A', label: '高一或高二的学生，普通班。', role: 'student',
+          servant: { lancer: 1, foreigner: 1 }, route: { flow: 1 }, persona: { group: 2, quiet: 1, online: 1 },
+          stat: { app: 2, con: 2 },
+          four: { schedule: '05:30 起床，22:30 回寝，白天在走神。', catch: '「等下再说。」' }
+        },
+        {
+          key: 'B', label: '高三，或者复读部。', role: 'student',
+          servant: { archer: 2 }, route: { intel: 1 }, persona: { study: 3, stuck: 2, anxious: 1 },
+          stat: { int: 3, edu: 3 },
+          four: { schedule: '01:00 睡，05:30 起，白天靠浓茶。', desire: '一个确定的、写下来的结果。' }
+        },
+        {
+          key: 'C', label: '体育或艺术特长生，训练队里。', role: 'student',
+          servant: { saber: 2, rider: 1 }, route: { assassin: 1 }, persona: { body: 3, hard: 2 },
+          stat: { str: 4, con: 3 },
+          four: { schedule: '练到灯关，回宿舍翻墙进去。', catch: '「再来一遍。」' }
+        },
+        {
+          key: 'D', label: '老师。我在这所学校里教书。', role: 'teacher',
+          servant: { caster: 2, ruler: 1 }, route: { rule: 2 }, persona: { adult: 3, proud: 2, obey: 1 },
+          stat: { edu: 4, pow: 2 },
+          four: { schedule: '05:20 到校，22:40 查完寝，中间批两摞卷子。', desire: '被人当成一个有分量的人，而不是一个岗位。' }
+        },
+        {
+          key: 'E', label: '学生会的，或者教务处的干事。', role: 'staff',
+          servant: { foreigner: 2, ruler: 2 }, route: { flow: 2, rule: 1 }, persona: { record: 3, clever: 2, adult: 1 },
+          stat: { app: 3, int: 3 },
+          four: { schedule: '别人上课我在拍，别人睡觉我在剪。', desire: '让这条被一百万人看到——或者，让它在名单上消失。' }
+        }
+      ]
+    },
+    {
       id: 'q1', no: '第一问', title: '凌晨四点，你在做什么？', hint: '不要想，选你真正做过的那件事。',
       options: [
         {
@@ -263,6 +298,151 @@
           servant: { berserker: 1, rider: 2, assassin: 1 }, route: { coop: 3 }, persona: { warm: 3, group: 2 },
           stat: { con: 3, app: 2 },
           four: { desire: '有人跟我一起吃饭，不用说话也行。' }
+        }
+      ]
+    },
+    {
+      id: 'q10', no: '第十问', title: '晚自习最后十分钟，你在做什么？', hint: '那十分钟里，教室里没有人抬头。',
+      options: [
+        {
+          key: 'A', label: '把明天的错题抄到一张新纸上。',
+          servant: { archer: 2, saber: 1 }, route: { intel: 2 }, persona: { study: 3, record: 2 },
+          stat: { int: 3, edu: 3 },
+          four: { catch: '「我记一下。」', fear: '明年的这个时候，还是这张桌子的这个划痕。' }
+        },
+        {
+          key: 'B', label: '盯着窗外，等教学楼最后一排灯灭。',
+          servant: { assassin: 3 }, route: { assassin: 2 }, persona: { night: 3, quiet: 2 },
+          stat: { dex: 3, pow: 2 },
+          four: { schedule: '灯灭之后才算我自己的时间。' }
+        },
+        {
+          key: 'C', label: '在群里发一个表情包，等有人回。',
+          servant: { lancer: 3, berserker: 1 }, route: { flow: 2 }, persona: { online: 3, group: 1 },
+          stat: { app: 3, dex: 2 },
+          four: { catch: '「这图我做的。」', fear: '发出去没人回。' }
+        },
+        {
+          key: 'D', label: '提前三分钟把书包背好，等铃。',
+          servant: { rider: 3, assassin: 1 }, route: { coop: 1 }, persona: { avoid: 3, obey: 2 },
+          stat: { con: 3, pow: 2 },
+          four: { desire: '不被任何人安排。' }
+        }
+      ]
+    },
+    {
+      id: 'q11', no: '第十一问', title: '你手机里存着一段视频。是什么？', hint: '相册最后一条，你一直没删。',
+      options: [
+        {
+          key: 'A', label: '自己在球场上的一次投篮，投进了。',
+          servant: { saber: 3 }, route: { flow: 1 }, persona: { body: 3, hard: 2, proud: 1 },
+          stat: { str: 4, con: 2 },
+          four: { desire: '被换上场，然后赢一次。' }
+        },
+        {
+          key: 'B', label: '班主任在走廊里骂人的一段。',
+          servant: { ruler: 2, archer: 1 }, route: { rule: 3 }, persona: { clever: 3, adult: 1 },
+          stat: { int: 4, edu: 2 },
+          four: { catch: '「这个我先存着。」', desire: '手里握着别人的把柄，就不用怕任何人。' }
+        },
+        {
+          key: 'C', label: '半夜宿舍楼下的一个人影。',
+          servant: { foreigner: 3 }, route: { intel: 2 }, persona: { seen: 3, curious: 2 },
+          stat: { app: 3, pow: 2 },
+          four: { fear: '没人看。数据掉下来的那个晚上我睡不着。' }
+        },
+        {
+          key: 'D', label: '一段笑声。录的时候不知道是谁在笑。',
+          servant: { berserker: 3, lancer: 1 }, route: { coop: 2 }, persona: { loud: 3, loyal: 2 },
+          stat: { app: 3, str: 2 },
+          four: { desire: '有人跟我一起笑，不用问为什么。' }
+        }
+      ]
+    },
+    {
+      id: 'q12', no: '第十二问', title: '有人在你背后说了一句话，你听见了。是哪一句？', hint: '走廊很空，那句话很清楚。',
+      options: [
+        {
+          key: 'A', label: '「他也就这样了。」',
+          servant: { caster: 3, lancer: 1 }, route: { rule: 1 }, persona: { proud: 3, adult: 1 },
+          stat: { pow: 4, edu: 2 },
+          four: { fear: '被人看穿我其实不行。' }
+        },
+        {
+          key: 'B', label: '「他其实挺努力的。」',
+          servant: { saber: 2, rider: 1 }, route: { coop: 1 }, persona: { hard: 3, body: 1 },
+          stat: { str: 3, pow: 3 },
+          four: { catch: '「再来一遍。」' }
+        },
+        {
+          key: 'C', label: '「别跟他一组。」',
+          servant: { assassin: 2, berserker: 1 }, route: { assassin: 2 }, persona: { avoid: 3, quiet: 2 },
+          stat: { dex: 3, pow: 2 },
+          four: { fear: '被叫到名字，然后所有人都回头。' }
+        },
+        {
+          key: 'D', label: '「他家里是不是出事了。」',
+          servant: { foreigner: 2, berserker: 1 }, route: { flow: 1 }, persona: { warm: 3, seen: 2 },
+          stat: { app: 4, pow: 1 },
+          four: { desire: '有一个人在需要我的时候，真的找我。' }
+        }
+      ]
+    },
+    {
+      id: 'q13', no: '第十三问', title: '如果这七天可以重来一次，你想改哪一件？', hint: '只能改一件。',
+      options: [
+        {
+          key: 'A', label: '那天早上，我没有叫醒他。',
+          servant: { berserker: 3, ruler: 1 }, route: { coop: 3 }, persona: { loyal: 3, warm: 2 },
+          stat: { con: 3, app: 3 },
+          four: { desire: '有人在最后还记得我。' }
+        },
+        {
+          key: 'B', label: '那张纸条，我没有交上去。',
+          servant: { archer: 2, caster: 1 }, route: { rule: 2 }, persona: { study: 2, anxious: 3 },
+          stat: { int: 4, edu: 2 },
+          four: { fear: '排名停在这张纸上，再也不动。' }
+        },
+        {
+          key: 'C', label: '那句「我不去」，我没有说出口。',
+          servant: { rider: 2, assassin: 2 }, route: { coop: 1 }, persona: { avoid: 3, quiet: 1 },
+          stat: { pow: 3, con: 3 },
+          four: { desire: '不被任何人安排。' }
+        },
+        {
+          key: 'D', label: '什么也不改。',
+          servant: { ruler: 3 }, route: { rule: 1 }, persona: { obey: 3, proud: 2 },
+          stat: { pow: 4 },
+          four: { catch: '「这个要报备吧。」' }
+        }
+      ]
+    },
+    {
+      id: 'q14', no: '第十四问', title: '你手背上的那个印子，什么时候会烫？', hint: '最后一次。选你真正注意到的那个时刻。',
+      options: [
+        {
+          key: 'A', label: '凌晨四点整。',
+          servant: { saber: 3, assassin: 1 }, route: { assassin: 1 }, persona: { night: 3, hard: 2 },
+          stat: { str: 3, pow: 3 },
+          four: { schedule: '04:00 醒，比铃早一个半钟头。' }
+        },
+        {
+          key: 'B', label: '熄灯那一秒。',
+          servant: { assassin: 3, foreigner: 1 }, route: { assassin: 3 }, persona: { night: 2, quiet: 3 },
+          stat: { dex: 4, pow: 2 },
+          four: { desire: '把这个世界调小一点。' }
+        },
+        {
+          key: 'C', label: '广播响的时候。',
+          servant: { lancer: 2, ruler: 2 }, route: { flow: 2 }, persona: { online: 3, loud: 1 },
+          stat: { app: 3, int: 3 },
+          four: { catch: '「你们别动，我拍一下。」' }
+        },
+        {
+          key: 'D', label: '从来没有烫过。',
+          servant: { foreigner: 3, caster: 1 }, route: { intel: 1 }, persona: { quiet: 2, seen: 2 },
+          stat: { pow: 3, app: 2 },
+          four: { fear: '有一天被骂的人换成我，也没有人说话。' }
         }
       ]
     }

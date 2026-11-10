@@ -467,6 +467,53 @@ const FLOW = `
       await c2.shot(path.join(ROOT, 'tools', 't_tl_locked.png'));
       c2.ws.close();
       console.log(L.join('\n'));
+    } else if (mode === 'idf') {
+      /* 身份线：过场 → 选项 → 继续 → 必须回到正常时段，不能卡住 */
+      const c = await openPage(BASE + '#dev=idf&k=teacher', 1200, 1000, false);
+      await sleep(1100);
+      console.log('frame: ' + await c.eval("JSON.stringify({head: (document.querySelector('.doc-head span')||{}).textContent, opts: document.querySelectorAll('#idf-opts .choice').length, scene: !!document.querySelector('.scene-img')})"));
+      await c.eval("document.querySelector('#idf-opts .choice').click(); 1");
+      await sleep(700);
+      console.log('picked: ' + await c.eval("JSON.stringify({opts: document.querySelectorAll('#idf-opts .choice').length, cont: !!document.querySelector('#story-root .btn--solid'), chips: document.querySelectorAll('.chips .chip').length})"));
+      await c.eval("document.querySelector('#story-root .btn--solid').click(); 1");
+      await sleep(900);
+      console.log('next: ' + await c.eval("JSON.stringify({slot: !!document.querySelector('#opts .choice'), map: !!document.querySelector('.map-card'), err: ((document.getElementById('errbox')||{}).textContent||'none').slice(0,140)})"));
+      await c.shot(path.join(ROOT, 'tools', 't_idf_after.png'));
+      c.ws.close();
+    } else if (mode === 'tlm') {
+      /* 时间线 · 手机端：列表横向条 + 阅读区占满，不许横向溢出 */
+      const c = await openPage(BASE + '#dev=tl', 390, 844, true);
+      await sleep(1400);
+      await c.shot(path.join(ROOT, 'tools', 't_tlm_list.png'));
+      const ov = await c.eval("JSON.stringify({sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, items: document.querySelectorAll('.tl-item').length})");
+      console.log('overflow: ' + ov);
+      await c.eval("document.querySelector('.tl-item').click(); 1");
+      await sleep(900);
+      await c.shot(path.join(ROOT, 'tools', 't_tlm_read.png'));
+      const ov2 = await c.eval("JSON.stringify({sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth, paras: document.querySelectorAll('.tl-p').length, cast: document.querySelectorAll('.tl-sv').length})");
+      console.log('reader: ' + ov2);
+      c.ws.close();
+    } else if (mode === 'clashm') {
+      /* 手机端：对轰应当改成上下 */
+      const c = await openPage(BASE + '#dev=clash', 390, 844, true);
+      await sleep(1700);
+      await c.shot(path.join(ROOT, 'tools', 't_clash_m1.png'));
+      await sleep(900);
+      await c.shot(path.join(ROOT, 'tools', 't_clash_m2.png'));
+      console.log('clash mobile ok');
+      c.ws.close();
+    } else if (mode === 'msum') {
+      /* 错位召唤撕裂演出：正常 → 撕开 → 换人 三帧 */
+      const c = await openPage(BASE + '#dev=missum', 1100, 1000, false);
+      await sleep(1500);
+      await c.shot(path.join(ROOT, 'tools', 't_msum_a.png'));
+      await sleep(900);
+      await c.shot(path.join(ROOT, 'tools', 't_msum_b.png'));
+      await sleep(1400);
+      await c.shot(path.join(ROOT, 'tools', 't_msum_c.png'));
+      const st = await c.eval("JSON.stringify({layer: !!document.querySelector('.fx-missummon'), ripped: !!(document.querySelector('.fx-missummon')||{classList:{contains:()=>false}}).classList.contains('ripped')})");
+      console.log('msum: ' + st);
+      c.ws.close();
     } else if (mode === 'tlclash') {
       const c = await openPage(BASE + '#dev=clash', 1280, 1000, false);
       await sleep(500);

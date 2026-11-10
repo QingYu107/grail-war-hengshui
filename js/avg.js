@@ -110,6 +110,8 @@
       'background:' + (cls === 'fx-summon' ? '#f4ecda' : '#0b0c0a') + ';opacity:1 !important;animation:none !important;' + 'transition:opacity .45s ease;';
     document.body.appendChild(layer);
     layer.addEventListener('pointerdown', function () { dismiss(); });
+    /* 有些自动化 / 键盘路径只发 click，不发 pointerdown；两个都收 */
+    layer.addEventListener('click', function () { dismiss(); });
     return layer;
   }
 
@@ -201,6 +203,59 @@
       el.innerHTML = '<div class="grid"></div><div class="scan"></div><div class="msg">' + (data.msg || '') + '</div>' +
         '<div class="hint" style="position:absolute;bottom:6vh;left:0;right:0;text-align:center;font-family:var(--hei);font-size:11px;letter-spacing:.3em;color:rgba(232,224,204,.4)">点击继续</div>';
       schedule(data.dur || 3200, done);
+    } else if (kind === 'missummon') {
+      /* 错位召唤：先给你看一张正常的契约卡，一秒钟以后从中间撕开。
+         不提前说、不预告，撕裂那一刻才换人。 */
+      try {
+        if (window.GrailAudio) {
+          window.GrailAudio.init && window.GrailAudio.init();
+          if (data.theme) window.GrailAudio.play(data.theme, { quick: true });
+        }
+      } catch (e) {}
+      el = ensureLayer('fx-missummon');
+      var A = data.from || {}, B = data.to || {};
+      /* 名字逐字「扎」出来：每个字从随机方向、带旋转插进来 */
+      var spans = String(B.name || '').split('').map(function (ch, i) {
+        var dx = (Math.random() * 2 - 1) * 20;
+        var dy = -16 - Math.random() * 22;
+        var rot = (Math.random() * 2 - 1) * 22;
+        return '<span style="--i:' + i + ';--dx:' + dx.toFixed(0) + 'px;--dy:' + dy.toFixed(0) +
+          'px;--rot:' + rot.toFixed(0) + 'deg">' + (ch === ' ' ? '&nbsp;' : ch) + '</span>';
+      }).join('');
+      el.innerHTML =
+        '<div class="mx">' +
+        '<div class="mx-a">' +
+        '<div class="mx-k">CONTRACT ／ 契约成立</div>' +
+        '<div class="mx-c">' + (A.cls || '') + '</div>' +
+        '<div class="mx-n">' + (A.name || '') + '</div>' +
+        '<div class="mx-s">' + (A.sub || '') + '</div>' +
+        '</div>' +
+        '<div class="mx-tear"><i></i><i></i><i></i><i></i><i></i><i></i></div>' +
+        '<div class="mx-spk"></div>' +
+        '<div class="mx-sig"><b></b><b></b><b></b></div>' +
+        '<div class="mx-b">' +
+        '<div class="mx-k">召唤错误 ／ ERROR</div>' +
+        '<div class="mx-c">' + (B.cls || '') + '</div>' +
+        '<div class="mx-n">' + spans + '</div>' +
+        '<div class="mx-s">' + (B.sub || '') + '</div>' +
+        '</div>' +
+        '<div class="mx-line">' + (data.line || '「你叫错了。」') + '</div>' +
+        '<div class="hint">点击继续</div>' +
+        '</div>';
+      setTimeout(function () {
+        if (!el || !el.isConnected) return;
+        el.classList.add('ripped');
+        if (!fxLite()) el.classList.add('quake');
+        try { if (window.GrailSFX && window.GrailSFX.boom) window.GrailSFX.boom(); } catch (e) {}
+        try { if (window.GrailSFX && window.GrailSFX.clang) window.GrailSFX.clang(); } catch (e) {}
+      }, data.hit || 1150);
+      setTimeout(function () {
+        try { if (window.GrailSFX && window.GrailSFX.glitch) window.GrailSFX.glitch(); } catch (e) {}
+      }, (data.hit || 1150) + 260);
+      setTimeout(function () {
+        try { if (window.GrailSFX && window.GrailSFX.heartbeat) window.GrailSFX.heartbeat(); } catch (e) {}
+      }, (data.hit || 1150) + 1500);
+      schedule(data.dur || 6200, done);
     } else if (kind === 'clash') {
       /* 宝具对轰：两块真名牌从左右压进来，撞在中间。
          两边的曲子在这里只放一次（whoever 先起），所以这里不接管 BGM，
@@ -223,7 +278,7 @@
       }
       el.innerHTML =
         half('l', L) + half('r', R) +
-        '<div class="cseam"></div><div class="ccore"></div><div class="cwave"><i></i><i></i><i></i></div>' +
+        '<div class="cseam"></div><div class="ccore"></div><div class="cfuse"></div><div class="cwave"><i></i><i></i><i></i></div>' +
         '<div class="cflash"></div>' +
         '<div class="cverdict">' + (data.verdict || '') + '</div>' +
         '<div class="hint">点击任意处继续</div>';

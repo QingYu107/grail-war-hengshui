@@ -233,7 +233,9 @@
         B.myHp -= dm3;
         say('你被卷了进去，HP −' + dm3 + '。', 'dmg');
         pushFx({ t: 'hurt', dmg: dm3, heavy: true });
-        B.onEvent('foeNoble', { foe: foe, name: np[0] });
+        /* 已经对轰过一次就别再播一张敌方卡 */
+        if (!B.clashTurn) B.onEvent('foeNoble', { foe: foe, name: np[0] });
+        B.clashTurn = false;
       } else if (intent === 'borrow') {
         var bid = (B.presentServants && B.presentServants.length)
           ? B.presentServants[Math.floor(rnd() * B.presentServants.length)] : null;
@@ -338,8 +340,16 @@
         if (B.stagger >= CFG.staggerMax) { nd += 8; B.stagger = 0; }
         B.foeHp -= nd;
         say('光把走廊照白了。' + foe.cls + ' HP −' + nd + '。', 'good');
+        /* 对轰：它这一手也是宝具，就不要再放两张单独的卡了 */
+        var willClash = (B.intent === 'noble') && !B.foeNobleDone;
+        if (willClash) B.clashTurn = true;
         pushFx({ t: 'noble', dmg: nd });
-        B.onEvent('myNoble', { me: me, name: np2[0] });
+        if (willClash) {
+          var fnp = (foe.noble && foe.noble[0]) || ['宝具'];
+          B.onEvent('nobleClash', { me: me, foe: foe, name: np2[0], foeName: fnp[0] });
+        } else {
+          B.onEvent('myNoble', { me: me, name: np2[0] });
+        }
       } else if (kind === 'flee') {
         var st0 = G.Engine.state();
         var chance = clamp(38 + st0.s.dex * 0.5 + (1 - foePct()) * 22 + B.bond * 4, 25, 92);

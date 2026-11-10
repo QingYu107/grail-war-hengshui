@@ -207,5 +207,45 @@ cases.forEach(function (c) {
 });
 console.log('judge cases:', cases.length - problems.filter(function (p) { return p.indexOf('judge') === 0; }).length, '/', cases.length);
 
+/* ---------- 时间线：每个结局一条线的小说 ----------
+   验收口径见 docs/TIMELINE.md + docs/CANON.md：
+   5–7 章、4000 字以上、至少 4 组御主、至少 1 处演出、不许出现 6012、
+   不许把孙笑川写成「第七位从者」。 */
+['timeline', 'timeline_e2e9', 'timeline_e3e8', 'timeline_e4e11', 'timeline_e5e10', 'timeline_e6e7'].forEach(function (f) {
+  try { require('../js/data/' + f + '.js'); } catch (e) { /* 还没交的那几条先跳过 */ }
+});
+var TL = window.GRAIL_TIMELINE || {};
+var TL_FX = ['clash', 'noble', 'summon', 'broadcast', 'roll', 'impact', 'glitch', 'beast', 'static', 'mirror', 'bleed', 'dissolve'];
+var TL_MASTERS = ['江野', '张远', '吴迪', '王大力', '邹丽君', '李嘉豪', '高鹏', '赵铁柱', '林小满'];
+var tlStats = [];
+Object.keys(TL).forEach(function (id) {
+  var L = TL[id] || {};
+  var chs = L.chapters || [];
+  var n = 0, fxs = 0, names = {};
+  if (!L.title) problems.push('tl ' + id + ' no title');
+  if (chs.length < 5 || chs.length > 7) problems.push('tl ' + id + ' chapters=' + chs.length);
+  chs.forEach(function (c, i) {
+    if (!c.title) problems.push('tl ' + id + ' ch' + (i + 1) + ' no title');
+    if (!c.text || !c.text.length) problems.push('tl ' + id + ' ch' + (i + 1) + ' empty');
+    (c.text || []).forEach(function (it) {
+      if (typeof it === 'string') {
+        n += it.replace(/\s/g, '').length;
+        TL_MASTERS.forEach(function (m) { if (it.indexOf(m) >= 0) names[m] = 1; });
+      } else if (it && it.fx) {
+        fxs++;
+        if (TL_FX.indexOf(it.fx) < 0) problems.push('tl ' + id + ' bad fx ' + it.fx);
+      }
+    });
+  });
+  if (n < 4000) problems.push('tl ' + id + ' only ' + n + ' chars');
+  if (!fxs) problems.push('tl ' + id + ' no fx');
+  if (Object.keys(names).length < 4) problems.push('tl ' + id + ' cast=' + Object.keys(names).length);
+  var all = chs.map(function (c) { return (c.text || []).filter(function (x) { return typeof x === 'string'; }).join(''); }).join('');
+  if (all.indexOf('6012') >= 0) problems.push('tl ' + id + ' has 6012');
+  if (all.indexOf('第七位从者') >= 0) problems.push('tl ' + id + ' calls ruler 第七位从者');
+  tlStats.push(id + ' ' + chs.length + '章/' + n + '字/' + fxs + '演出/' + Object.keys(names).length + '组');
+});
+console.log('timeline:', tlStats.join('　') || 'none');
+
 console.log('ending keys ok:', Object.keys(G.ENDINGS).length === 11);
 process.exit(problems.length ? 1 : 0);

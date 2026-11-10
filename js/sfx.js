@@ -94,10 +94,24 @@
     noise(0.16, 0.05, 2200, 900);
   }
 
+  /* 宝具对轰：低频砸下来 + 一层金属余响。两件宝具撞在一起该有的两个声音。 */
+  function boom() {
+    tone(70, 0.55, 'sine', 0.26, 34);
+    noise(0.42, 0.20, 700, 120);
+    setTimeout(function () { noise(0.22, 0.12, 2600, 900); }, 40);
+    setTimeout(function () { tone(196, 0.9, 'triangle', 0.05, 174); }, 120);
+  }
+
+  function clang() {
+    tone(1240, 0.18, 'square', 0.05, 620);
+    noise(0.12, 0.10, 4200, 1600);
+  }
+
   window.GrailSFX = {
     init: init,
     tick: tick, dice: dice, success: success, fail: fail,
     heartbeat: heartbeat, stamp: stamp, glitch: glitch, page: page,
+    boom: boom, clang: clang,
     setMuted: function (v) { muted = !!v; },
     isMuted: function () { return muted; }
   };

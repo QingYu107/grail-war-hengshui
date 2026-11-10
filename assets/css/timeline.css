@@ -1,0 +1,218 @@
+﻿/* ============================================================================
+ * 时间线 · 阅读器
+ * 档案馆第二个标签：左列表 / 右阅读区。正文 15px / 2.05 行高（规格钉死）。
+ * 演出条（.tl-cue）滚进视口自动炸开，炸完变灰，可重放。
+ * ==========================================================================*/
+
+.tl-wrap {
+  display: grid;
+  grid-template-columns: 252px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+}
+
+/* ---------- 左：11 条线 ---------- */
+.tl-side { min-width: 0; }
+.tl-side-t {
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .3em;
+  color: var(--red); border-bottom: 1px solid var(--line);
+  padding-bottom: 6px; margin-bottom: 9px;
+}
+.tl-list { display: flex; flex-direction: column; gap: 6px; max-height: 62vh; overflow: auto; padding-right: 2px; }
+
+.tl-item {
+  position: relative; display: grid; grid-template-columns: 32px minmax(0, 1fr);
+  gap: 1px 9px; width: 100%; text-align: left; cursor: pointer;
+  appearance: none; font: inherit; color: inherit;
+  border: 1px solid var(--line); background: rgba(255, 255, 255, .2);
+  padding: 9px 10px; transition: .16s;
+}
+.tl-item:hover { border-color: var(--ink); transform: translateY(-1px); }
+.tl-item.on { border-color: var(--ink); background: rgba(140, 43, 34, .07); border-left: 3px solid var(--red); }
+.tl-no {
+  grid-row: span 3; font-family: var(--mono); font-size: 10px; letter-spacing: .06em;
+  color: var(--ink-3); padding-top: 2px;
+}
+.tl-item.on .tl-no { color: var(--red); }
+.tl-name { font-family: var(--serif); font-size: 14px; letter-spacing: .04em; color: var(--ink); }
+.tl-sub { font-size: 10.5px; line-height: 1.55; color: var(--ink-3); }
+.tl-meta { font-family: var(--mono); font-size: 9px; letter-spacing: .06em; color: var(--ink-3); opacity: .8; }
+.tl-done {
+  position: absolute; right: 8px; top: 8px; font-family: var(--mono); font-size: 11px;
+  color: #2f6b3a;
+}
+
+/* ---------- 右：阅读区 ---------- */
+.tl-reader {
+  position: relative; min-width: 0;
+  border: 1px solid var(--line); background: rgba(255, 255, 255, .16);
+  padding: 0; height: 62vh; overflow: auto;
+}
+.tl-empty { padding: 46px 26px; text-align: center; color: var(--ink-3); }
+.tl-empty-k {
+  display: block; font-family: var(--mono); font-size: 10px; letter-spacing: .5em;
+  color: var(--red); margin-bottom: 18px;
+}
+.tl-empty p { font-size: 13px; line-height: 2; margin: 0; }
+.tl-empty-s { margin-top: 10px !important; font-size: 11.5px !important; opacity: .72; }
+
+.tl-head {
+  position: sticky; top: 0; z-index: 3;
+  background: linear-gradient(180deg, var(--paper) 72%, rgba(244, 236, 218, 0));
+  padding: 13px 20px 10px;
+}
+.tl-hl { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.tl-hl b { font-family: var(--serif); font-size: 16px; letter-spacing: .06em; color: var(--ink); }
+.tl-idx { font-family: var(--mono); font-size: 10px; letter-spacing: .2em; color: var(--ink-3); white-space: nowrap; }
+.tl-hsub {
+  margin-top: 5px; font-family: var(--mono); font-size: 9.5px; letter-spacing: .1em;
+  color: var(--ink-3); border-bottom: 1px solid var(--line); padding-bottom: 8px;
+}
+
+.tl-body { padding: 14px 22px 76px; }
+.tl-p {
+  font-family: var(--serif); font-size: 15px; line-height: 2.05; color: var(--ink-2);
+  margin: 0 0 12px; letter-spacing: .01em;
+  animation: tlRise .5s ease both;
+}
+.tl-p.dialogue { color: var(--ink); }
+.tl-p .kw { font-style: normal; color: var(--red); font-weight: 700; }
+@keyframes tlRise { from { opacity: 0; transform: translateY(5px) } to { opacity: 1; transform: none } }
+
+/* 档案摘录 */
+.tl-doc {
+  position: relative; margin: 16px 0 18px; padding: 14px 16px 14px 18px;
+  border: 1px solid var(--line); border-left: 3px solid var(--ink-3);
+  background: rgba(255, 255, 255, .3);
+  font-family: var(--mono); font-size: 11.5px; line-height: 2; color: var(--ink-2);
+  letter-spacing: .04em;
+}
+.tl-doc-k {
+  display: block; font-family: var(--hei); font-size: 9px; letter-spacing: .34em;
+  color: var(--ink-3); margin-bottom: 7px;
+}
+
+/* ---------- 演出条 ---------- */
+.tl-cue {
+  position: relative; display: flex; align-items: center; gap: 10px;
+  width: 100%; margin: 18px 0 20px; padding: 12px 14px;
+  appearance: none; font: inherit; cursor: pointer; text-align: left;
+  border: 1px dashed rgba(140, 43, 34, .45);
+  background: linear-gradient(90deg, rgba(140, 43, 34, .08), rgba(140, 43, 34, 0));
+  color: var(--ink-2); transition: .18s;
+}
+.tl-cue:hover { border-color: var(--red); background: rgba(140, 43, 34, .13); }
+.tl-cue .cue-k {
+  flex: 0 0 auto; font-family: var(--mono); font-size: 9px; letter-spacing: .28em;
+  color: var(--red); border: 1px solid rgba(140, 43, 34, .4); padding: 3px 6px;
+}
+.tl-cue b { flex: 1 1 auto; font-family: var(--hei); font-size: 12.5px; letter-spacing: .1em; font-weight: 400; }
+.tl-cue .cue-a {
+  flex: 0 0 auto; font-family: var(--mono); font-size: 9px; letter-spacing: .12em;
+  color: var(--ink-3);
+}
+.tl-cue.playing { border-style: solid; border-color: var(--red); animation: cuePulse 1.1s ease-in-out infinite; }
+@keyframes cuePulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(140, 43, 34, 0) } 50% { box-shadow: 0 0 0 3px rgba(140, 43, 34, .16) } }
+.tl-cue.played { opacity: .46; border-style: solid; border-color: var(--line); background: rgba(255, 255, 255, .14); }
+.tl-cue.played .cue-a::after { content: ''; }
+.tl-cue.played:hover { opacity: .8; }
+
+.tl-bgm { height: 0; margin: 0; }
+
+/* 读完标记 */
+.tl-done-flag {
+  margin: 26px 0 10px; padding-top: 14px; border-top: 1px solid var(--line);
+  font-family: var(--mono); font-size: 10px; letter-spacing: .3em; color: var(--ink-3);
+  text-align: center;
+}
+
+/* 底栏 */
+.tl-foot {
+  position: sticky; bottom: 0; z-index: 3;
+  display: flex; gap: 8px; justify-content: center;
+  padding: 12px 18px 14px; border-top: 1px solid var(--line);
+  background: linear-gradient(0deg, var(--paper) 74%, rgba(244, 236, 218, 0));
+}
+.tl-foot .mini.tone { border-color: rgba(140, 43, 34, .5); color: #8c2b22; }
+.tl-foot .mini.tone:hover { background: #8c2b22; color: #f4ecda; }
+
+/* 目录 */
+.tl-toc-pop {
+  position: absolute; right: 14px; top: 58px; z-index: 6;
+  width: min(300px, 78%); background: var(--paper); border: 1px solid var(--ink);
+  box-shadow: 0 16px 44px rgba(0, 0, 0, .4); padding: 10px 12px 8px;
+}
+.tl-toc-t { font-family: var(--mono); font-size: 9.5px; letter-spacing: .34em; color: var(--red); margin-bottom: 8px; }
+.tl-toc-row {
+  display: flex; gap: 10px; align-items: baseline; width: 100%; text-align: left;
+  appearance: none; font: inherit; color: var(--ink-2); background: none; border: 0;
+  border-bottom: 1px dashed var(--line); padding: 8px 2px; cursor: pointer; font-size: 12.5px;
+}
+.tl-toc-row:last-child { border-bottom: 0; }
+.tl-toc-row span { font-family: var(--mono); font-size: 9.5px; color: var(--ink-3); }
+.tl-toc-row:hover { color: var(--ink); background: rgba(140, 43, 34, .06); }
+.tl-toc-row.on { color: var(--red); font-weight: 700; }
+
+/* 未解锁整块 */
+.tl-locked { padding: 54px 20px; text-align: center; }
+.tl-lock-mark {
+  font-family: var(--mono); font-size: 11px; letter-spacing: .8em; color: var(--ink-3);
+  opacity: .5; margin-bottom: 20px;
+}
+.tl-locked-line { font-size: 13px; line-height: 2; color: var(--ink-3); letter-spacing: .06em; }
+
+/* 档案馆的标签栏 */
+.ac-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--ink); margin-bottom: 14px; }
+.ac-tab {
+  appearance: none; font-family: var(--hei); font-size: 11.5px; letter-spacing: .18em;
+  color: var(--ink-3); background: none; border: 1px solid transparent; border-bottom: 0;
+  padding: 8px 16px; cursor: pointer; margin-bottom: -1px;
+}
+.ac-tab.on { color: var(--ink); border-color: var(--ink); background: var(--paper); font-weight: 700; }
+.ac-tab:hover { color: var(--ink); }
+
+.tl-modal { width: min(1020px, 100%); }
+
+/* ---------- 手机 ---------- */
+@media (max-width: 960px) {
+  .tl-wrap { grid-template-columns: 1fr; gap: 10px; }
+  /* 列表变成一排横向的条，阅读区占满 */
+  .tl-list {
+    flex-direction: row; max-height: none; overflow-x: auto; overflow-y: hidden;
+    gap: 6px; padding-bottom: 4px; scroll-snap-type: x proximity;
+  }
+  .tl-item {
+    flex: 0 0 176px; grid-template-columns: 26px minmax(0, 1fr);
+    scroll-snap-align: start;
+  }
+  .tl-sub { display: none; }
+  .tl-reader { height: 66vh; min-height: 0; max-height: none; overflow: auto; }
+  .tl-body { padding: 12px 14px 64px; }
+  .tl-p { font-size: 15px; line-height: 2; }
+  .tl-head { padding: 10px 14px 8px; }
+  .tl-toc-pop { top: 50px; right: 8px; }
+}
+
+@media (max-width: 520px) {
+  .tl-hl b { font-size: 15px; }
+  .tl-item { flex-basis: 156px; }
+  .tl-cue { padding: 10px 11px; gap: 8px; }
+  .tl-cue b { font-size: 11.5px; }
+  .tl-foot .mini { padding: 7px 10px; font-size: 10px; }
+}
+
+/* 这条线上有戏的从者：一排小头像，灰的，指上去才亮 */
+.tl-cast { display: flex; gap: 6px; padding: 8px 0 2px; }
+.tl-cast .tl-sv {
+  width: 26px; height: 26px; border-radius: 50%;
+  background-size: cover; background-position: center 22%;
+  border: 1px solid var(--line);
+  filter: grayscale(1) contrast(1.1) brightness(.88);
+  transition: .18s;
+}
+.tl-cast .tl-sv:hover { filter: none; border-color: var(--red); transform: translateY(-1px); }
+
+@media (max-width: 960px) {
+  .tl-cast { padding: 6px 0 0; }
+  .tl-cast .tl-sv { width: 22px; height: 22px; }
+}

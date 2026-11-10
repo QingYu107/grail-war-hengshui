@@ -174,6 +174,18 @@
     try { return localStorage.getItem('grail_fx') === 'lite'; } catch (e) { return false; }
   }
 
+  /* ---------- 档案解锁后门 ----------
+     设置里那个「解锁全部」开关。它只改「看得见什么」，不写结局、不动存档，
+     关掉就恢复原样——所以放心点。 */
+  var UNLOCK_KEY = 'grail_unlock_all';
+  function unlockAll() {
+    try { return localStorage.getItem(UNLOCK_KEY) === '1'; } catch (e) { return false; }
+  }
+  function setUnlockAll(v) {
+    try { localStorage.setItem(UNLOCK_KEY, v ? '1' : '0'); } catch (e) {}
+  }
+  window.GrailUnlockAll = unlockAll;
+
   function openSettings() {
     var old = document.getElementById('set-layer');
     if (old) old.remove();
@@ -220,6 +232,12 @@
 
       '<div class="set-sec"><h5>存档</h5>' + (saveRows || '<p>没有档案位。</p>') +
       '<p class="set-tip">自动存档随时在写，不会顶掉这三个位置。</p></div>' +
+
+      '<div class="set-sec"><h5>档案</h5>' +
+      '<div class="set-row"><span>解锁全部（结局图鉴 + 时间线）</span>' +
+      '<button class="switch" id="set-unlock">' + (unlockAll() ? '开' : '关') + '</button></div>' +
+      '<p class="set-tip">给想先读小说的人开的后门。关掉就恢复原样——它不写存档、不动进度，只改「看得见什么」。</p>' +
+      '</div>' +
 
       '<div class="set-sec"><h5>重置</h5>' +
       '<div class="set-row"><span>清空全部进度（存档 / 档案馆 / 设置）</span>' +
@@ -285,6 +303,10 @@
         }
       };
     });
+    layer.querySelector('#set-unlock').onclick = function () {
+      setUnlockAll(!unlockAll());
+      layer.remove(); openSettings();
+    };
     layer.querySelector('#set-wipe').onclick = function () {
       var btn = this;
       if (btn.getAttribute('data-armed') !== '1') {
@@ -347,9 +369,10 @@
     var a = readArchive();
     var seen = a.endings || {};
     var ids = Object.keys(G.ENDINGS || {});
+    var allOpen = unlockAll();
     var endingCards = ids.map(function (id) {
       var e = G.ENDINGS[id];
-      var got = seen[id] || 0;
+      var got = allOpen ? Math.max(1, seen[id] || 0) : (seen[id] || 0);
       return '<div class="ac-card' + (got ? '' : ' locked') + '">' +
         '<b>' + (got ? esc(e.name) : '？？？') + '</b>' +
         '<span>' + (got ? esc(e.en || '') : '未解锁') + (got > 1 ? '　×' + got : '') + '</span></div>';
@@ -375,8 +398,8 @@
       '<button class="ac-tab" data-pane="tl">时间线</button>' +
       '</div>' +
       '<div id="ac-pane-end">' +
-      '<div class="ac-stat">通关 ' + (a.cleared || 0) + ' 次　·　已见结局 ' + Object.keys(seen).length + ' / ' + ids.length + '　·　同行从者 ' + svIds.length + ' / 9' +
-      '　·　成就 ' + Object.keys(a.ach || {}).length + ' / ' + ACHIEVEMENTS.length + '</div>' +
+      '<div class="ac-stat">通关 ' + (a.cleared || 0) + ' 次　·　已见结局 ' + (allOpen ? ids.length : Object.keys(seen).length) + ' / ' + ids.length + '　·　同行从者 ' + svIds.length + ' / 9' +
+      '　·　成就 ' + Object.keys(a.ach || {}).length + ' / ' + ACHIEVEMENTS.length + (allOpen ? '　·　（已开解锁全部）' : '') + '</div>' +
       '<h5>结局图鉴</h5><div class="ac-grid">' + endingCards + '</div>' +
       '<h5>同行过的从者（最高羁绊）</h5><p>' + svLine + '</p>' +
       '<h5>成就</h5><div class="ac-achs">' + achLine + '</div>' +
@@ -411,7 +434,7 @@
     $('btn-continue').disabled = !has;
     $('start-note').innerHTML = has
       ? '检测到未完成的档案。继续将从上次停下的时段开始。'
-      : '档案室提示：登记表共九问，答案决定你会召唤到谁。此过程不可撤销。';
+      : '档案室提示：登记表共十四问，第一问填身份。答案决定你会召到谁。此过程不可撤销。';
     var confirmTick = 0;
     $('btn-start').onclick = function () {
       // 不用原生 confirm（部分内置浏览器会静默拦截），改成按钮二次确认
@@ -450,8 +473,9 @@
     layer.innerHTML = '<div style="background:#f4ecda;color:#1c1a16;max-width:720px;width:100%;max-height:84vh;overflow:auto;padding:32px 34px;font-family:var(--serif);line-height:2;box-shadow:0 20px 60px rgba(0,0,0,.5)">' +
       '<div style="font-family:var(--hei);font-size:11px;letter-spacing:.3em;color:#8c2b22;margin-bottom:10px">档案说明</div>' +
       '<h2 style="margin:0 0 12px;font-size:24px">我做的这是什么东西</h2>' +
-      '<p>我把《圣杯战争·衡水：凌晨四点的圣杯》（COC 7th 非官方同人模组）改成了单人版：七组御主里，其余六组由系统扮演。</p>' +
-      '<p>九道登记题决定你召到谁、拿哪张御主卡、走哪条职介线。相性分 A+ / A / C / E 四档，看你填的答案命中了从者几个关键词。</p>' +
+      '<p>我把《圣杯战争·衡水：凌晨四点的圣杯》（COC 7th 非官方同人模组）改成了单人版：九位御主对九骑从者，一一对应。你占一席，其余八位由系统扮演。</p>' +
+      '<p>七席参赛（Saber / Archer / Lancer / Rider / Caster / Assassin / Berserker），外加两条额外线：赵铁柱（教务处主任）对 Ruler 孙笑川，是裁判；林小满（学生会）对 Foreigner 丁真，是编外。名单上七行，前六行已经登记，第七行留给你——你在灯灭那一秒才拿到令咒。</p>' +
+      '<p>十四道登记题，第一问先填身份。身份决定你能进哪扇门：学生走学生线，老师走教师线，学生会的走降临者线，教务处的走裁判线。你会召到谁，答案是别人的，不是你能选的。</p>' +
       '<p>序章加七天。每天三段主线、一次自由行动，入夜之后还有一段「熄灯以后」——四选一，选完才翻篇。选项卡上我只写这一手要动什么本事，不给成功率，也不写后果。</p>' +
       '<p>SAN 是唯一的血条，曝光度满 10 会终止战争；兽的进度条每过一夜涨一格，当天你踩过刹车就不涨——夜里早睡是少数能按住它的办法。精神掉档以后，判定、交手、连选项本身都会跟着不对劲。</p>' +
       '<p>战斗五手：交手 / 架住 / 读招 / 宝具 / 撤。敌方每回合先露一句预兆，读招能把它翻成明确意图，同时叠一层破绽；破绽满三层，下一手必中。</p>' +
@@ -506,6 +530,11 @@
   /* ---------- 分配 ---------- */
   function assign() {
     var st = E.create(ui.answers);
+    if (ui.forceMisfit) {
+      st.affinity.level = 'E';
+      st.affinity.misfitFrom = st.servantId === 'saber' ? 'archer' : 'saber';
+      st.s.flags.misfit = true;
+    }
     resetSession();
     var m = G.master(st.masterId), sv = G.servant(st.servantId), r = G.route(st.routeId);
     var a = st.affinity;
@@ -514,8 +543,11 @@
     var levelNote = a.level === 'A+' ? '完美相性：命中全部三个关键词。该从者全属性 +5，附赠一句专属台词。'
       : a.level === 'A' ? '正常召唤：命中两个关键词。按档案数据执行。'
         : a.level === 'C' ? '勉强召唤：只命中一个关键词。该从者全属性 −10，每日额外消耗 2 MP。'
-          : '错位召唤：一个关键词都没有命中。它带着「暴走」登场——第一次战斗前须通过 POW 检定。';
+          : '相性 E。你填的那些，一项都没有落在那份档案上。判定书右下角有一行小字，被笔划掉了。';
+    /* 错位不预告。只在纸的四周透出一点红——看得见的人会看见。 */
+    var misfitHint = a.level === 'E';
 
+    root.classList.toggle('misfit', !!misfitHint);
     root.innerHTML =
       '<div class="doc-head"><span>相性判定书</span><span class="mid">依据 · 校园车卡规则 6.1 / 相性判定 5.5</span><span class="no">' + r.en + '-' + sv.cls + '</span></div>' +
       '<div class="assign-grid">' +
@@ -620,6 +652,7 @@
   /* 每个时段配一张场景图（找不到就退回当日默认图） */
   var SLOT_IMG = {
     p1: 'assets/img/scene_honor.jpg', p2: 'assets/img/scene_corridor.jpg', p3: 'assets/img/scene_dorm.jpg',
+    p3m: 'assets/img/scene_dorm.jpg',
     d1a: 'assets/img/scene_track.jpg', d1b: 'assets/img/scene_canteen.jpg', d1c: 'assets/img/scene_roofnight.jpg',
     d2a: 'assets/img/scene_classroom_night.jpg', d2b: 'assets/img/scene_canteen.jpg', d2c: 'assets/img/scene_dorm.jpg',
     d3a: 'assets/img/scene_exam.jpg', d3b: 'assets/img/scene_exam.jpg', d3c: 'assets/img/scene_exam.jpg', d3d: 'assets/img/scene_honor.jpg',
@@ -664,6 +697,19 @@
       var arr = [];
       for (var i = 0; i < 12; i++) arr.push((i + 1) + '　' + pool[(i * 3 + 2) % pool.length]);
       data.names = arr;
+    }
+    /* 错位召唤：进房间那一张召唤卡照常播——正常的那一骑、正常的契约成立。
+       撕开是在卡片自己身上发生的（avg.js 的 missummon），这里只负责把两张牌给它。 */
+    if (cfg.kind === 'summon' && slot.id === 'p3' && st.s.flags.misfit && st.affinity && st.affinity.misfitFrom) {
+      var fsv = G.servant(st.affinity.misfitFrom);
+      var tsv = G.servant(st.s.servantId);
+      data = {
+        from: { cls: fsv.cls, name: fsv.name, sub: fsv.one || '' },
+        to: { cls: tsv.cls, name: tsv.name, sub: tsv.one || '' },
+        theme: tsv.theme,
+        line: '「你叫错了。」'
+      };
+      return { cfg: { kind: 'missummon' }, data: data, key: key, st: st };
     }
     return { cfg: cfg, data: data, key: key, st: st };
   }
@@ -807,6 +853,73 @@
   /* ---------- 中段插叙 ----------
      Day2 / Day4 / Day6 各一段，没有选项，讲一件和你的选择无关、但全校都经历的事。
      作用是让「这一天」有自己的时间，而不是几个时段拼起来的。 */
+  /* ---------- 身份线 ----------
+     学生走默认主线。另外三种身份每天开场先过一段只属于他们的：
+     老师（邹丽君）、裁判（赵铁柱）、降临者（林小满）。
+     这段不占行动点，也不改主线；它只是把「你站在哪儿」这件事写出来。 */
+  function identityOf(st) {
+    if (!st) st = E.state();
+    var m = G.master(st.masterId);
+    if (!m) return 'student';
+    if (m.id === 'zhaotiezhu') return 'ruler';
+    if (m.id === 'linxiaoman') return 'foreigner';
+    if (/教师/.test(m.job || '')) return 'teacher';
+    return 'student';
+  }
+
+  function renderIdentityFrame(st) {
+    var key = identityOf(st);
+    var P = (window.GRAIL_PATHS || {})[key];
+    var F = P && P.days && P.days[st.s.day];
+    if (!F) { st.s.flags['idf_' + st.s.day] = true; E.save(); renderSlot(); return; }
+    var root = $('story-root');
+    $('game-day').textContent = st.s.day === 0 ? '序 章 · 第零夜' : 'DAY ' + st.s.day + ' / 7';
+    $('game-clock').textContent = F.time;
+    renderHud();
+    root.innerHTML =
+      '<div class="doc-head" style="margin-bottom:18px"><span>' + esc(P.name) + ' · ' + esc(P.who) + '</span>' +
+      '<span class="mid">' + esc(P.tag) + '</span><span class="no">第 ' + st.s.day + ' 天</span></div>' +
+      '<div class="scene-place">' + esc(F.place) + '</div>' +
+      (P.scene ? '<div class="scene-img"><img loading="lazy" decoding="async" src="' + P.scene + '" alt="" onerror="this.parentNode.style.display=\'none\'"></div>' : '') +
+      '<div class="prose">' + paras(F.intro, false) + '</div>' +
+      '<div class="choices" id="idf-opts">' + F.options.map(function (o, i) {
+        return '<button class="choice" data-i="' + i + '"><span class="k">' + (i + 1) + '</span><span>' + esc(o.label) + '</span></button>';
+      }).join('') + '</div>' +
+      '<div class="doc-foot"><span>' + esc(P.tag) + '</span><span>第 ' + (10 + st.s.day) + ' 页 / 共 81 页</span></div>';
+
+    root.querySelectorAll('#idf-opts .choice').forEach(function (b) {
+      b.onclick = function () {
+        var o = F.options[+b.getAttribute('data-i')];
+        st.s.flags['idf_' + st.s.day] = true;
+        var notes = [];
+        try { notes = E.apply(o.fx || {}); } catch (e) { notes = []; }
+        var box = root.querySelector('#idf-opts');
+        if (box) box.remove();
+        var out = el('div', 'prose');
+        out.innerHTML = paras(o.text || [], false);
+        root.appendChild(out);
+        var chips = effectChips(notes);
+        if (chips) root.appendChild(el('div', 'chips', chips));
+        var row = el('div', 'btn-row');
+        var btn = el('button', 'btn btn--solid', '继续');
+        btn.onclick = function () { ui.beat = null; renderSlot(); };
+        row.appendChild(btn);
+        root.appendChild(row);
+        try {
+          var before = { san: 0 };
+          if (o.fx && o.fx.beast && window.GrailAVG && window.GrailAVG.glitchBurst) {
+            window.GrailAVG.glitchBurst(null, { dur: 380, shake: true });
+          }
+          void before;
+        } catch (e) {}
+        E.save();
+        setTimeout(settle, 700);
+      };
+    });
+    setTimeout(settle, 900);
+    E.save();
+  }
+
   function renderInterlude(day) {
     var st = E.state();
     var IN = (window.GRAIL_EXPAND || {}).interludes || {};
@@ -873,10 +986,17 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
+  /* 相性 E 的 if 线：同一格换成「错位召唤」那一版 */
+  function slotFor(st) {
+    var s = currentSlot();
+    if (s && s.variant && s.variant.misfit && st.s.flags.misfit) return s.variant.misfit;
+    return s;
+  }
+
   function renderSlotInner() {
     var st = E.state(), D = currentDay();
     if (!D) { finish(); return; }
-    var slot = currentSlot();
+    var slot = slotFor(st);
     if (!slot) { advanceDay(); return; }
     /* 共通线：每天第一次进来，先点名 */
     if (st.s.day >= 1 && st.s.slot === 0 && !st.s.flags['rollcall_' + st.s.day]) {
@@ -886,6 +1006,10 @@
     if (st.s.day >= 1 && !st.s.flags['inter_' + st.s.day]) {
       var IN = (window.GRAIL_EXPAND || {}).interludes || {};
       if (IN[st.s.day]) { renderInterlude(st.s.day); return; }
+    }
+    /* 身份线：老师 / 裁判 / 降临者，每天开场先过一段自己的（序章也有） */
+    if (!st.s.flags['idf_' + st.s.day] && identityOf(st) !== 'student') {
+      renderIdentityFrame(st); return;
     }
     /* 决战：04:00 之前先把你这一周过一遍 */
     if (slot.id === 'd7c' && !st.s.flags.recallDone) {
@@ -1134,7 +1258,74 @@
     return from[Math.floor(Math.random() * from.length)];
   }
 
+  /* 错位召唤的后账：第一场战斗之前，从者会先朝你转过来一次。
+     POW 检定过了，你能压住它；没过，它先打最近的一个人——那个人通常是你。 */
+  function misfitPrelude(o) {
+    var st = E.state();
+    st.s.flags.misfitWaged = true;
+    var sv = G.servant(st.servantId);
+    var r = E.roll('意志', -10);
+    var lines, chips;
+    if (r.ok) {
+      lines = [
+        '动手之前，' + sv.cls + ' 先转向了你。',
+        '「让开。」',
+        '「站住。」你说。',
+        '它停了。三秒。那三秒里，你听见很远的地方有人在数数，数到七就停了。',
+        '然后它转回去，走向对面。',
+        '你这才发现自己的手一直举着。'
+      ];
+      E.apply({ san: -1 });
+      chips = '<span class="chip">意志 ' + r.die + ' / ' + r.target + '　压住了</span><span class="chip down">SAN −1</span>';
+    } else {
+      var hurt = Math.floor(Math.random() * 6) + 3;
+      st.s.hp = Math.max(1, (st.s.hp || 1) - hurt);
+      E.apply({ san: -3 });
+      lines = [
+        '动手之前，' + sv.cls + ' 先转向了你。',
+        '「让开。」',
+        '你说不出话。',
+        '它的手抬起来，落下来。你退了两步，后背撞在铁丝网上。',
+        '然后它转身冲向对面——它不认得谁是敌人。它只是先打了离得最近的那个。',
+        '你捂着肋骨站起来。血从指缝里出来，是温的。'
+      ];
+      chips = '<span class="chip">意志 ' + r.die + ' / ' + r.target + '　没压住</span><span class="chip down">HP −' + hurt + '　SAN −3</span>';
+    }
+    var root = $('story-root');
+    root.innerHTML =
+      '<div class="doc-head" style="margin-bottom:18px"><span>暴走 · 错位召唤</span>' +
+      '<span class="mid">相性 E ／ 第一次战斗前</span><span class="no">POW</span></div>' +
+      '<div class="prose">' + paras(lines, true) + '</div>' +
+      '<div class="chips">' + chips + '</div>' +
+      '<div class="btn-row"><button class="btn btn--solid" id="mf-go">迎上去</button></div>' +
+      '<div class="doc-foot"><span>教务处 · 备案</span><span>第 7 页 / 共 81 页</span></div>';
+    try { if (window.GrailAVG && window.GrailAVG.stinger) window.GrailAVG.stinger('static', { dur: 1200, msg: '它认不出你' }); } catch (e) {}
+    $('mf-go').onclick = function () { startBattle(o); };
+    E.save();
+    setTimeout(settle, 700);
+  }
+
+  /* 宝具对轰：两件宝具在同一个回合撞上时用这个，不再放两张单独的卡。 */
+  function clashCut(me, foe, myName, foeName) {
+    try {
+      if (window.GrailAudio) {
+        window.GrailAudio.init && window.GrailAudio.init();
+        window.GrailAudio.play('battle', { quick: true });
+      }
+      if (window.GrailAVG && window.GrailAVG.stinger) {
+        window.GrailAVG.stinger('clash', {
+          bgm: 'battle', hit: 1500, dur: 4600,
+          left: { cls: me.cls, name: myName, who: me.name + ' ／ 你的从者', color: me.tint || '#8f2b22' },
+          right: { cls: foe.cls, name: foeName, who: foe.name, color: foe.tint || '#8a6a2a' },
+          verdict: '两件宝具在同一个高度撞上。'
+        });
+      }
+    } catch (e) {}
+  }
+
   function startBattle(o) {
+    var st0 = E.state();
+    if (st0.s.flags.misfitSummon && !st0.s.flags.misfitWaged) { misfitPrelude(o); return; }
     var cfg = clone(o.battle || {});       // 不直接改剧情数据：'auto' 解析完就写回了原对象
     var st = E.state();
     if (!cfg.foe) cfg.foe = 'auto';
@@ -1152,6 +1343,7 @@
         night: !!cfg.night,
         onEvent: function (kind, info) {
           if (kind === 'myNoble') nobleCut(info.me, info.name);
+          if (kind === 'nobleClash') clashCut(info.me, info.foe, info.name, info.foeName);
           // 敌方开宝具（包括兽「借用」别人的宝具）：同样要出宝具画面 + 对应曲，
           // 并且一直响到下一次宝具或这场战斗结束。
           if (kind === 'foeNoble') nobleCut(info.foe, info.name);
@@ -2860,6 +3052,38 @@
           verdict: '两块东西撞在一起的时候，没有声音。'
         }, function () {});
       }, 400);
+    } else if (m[1] === 'assignE') {
+      ui.forceMisfit = true; assign(); screen('screen-assign');
+    } else if (m[1] === 'missum') {
+      /* 错位召唤的撕裂演出预览 */
+      E.create(preset); screen('screen-game'); renderSlot();
+      setTimeout(function () {
+        window.GrailAVG.stinger('missummon', {
+          from: { cls: 'SABER', name: '科比·比恩·布莱恩特', sub: '湖人队最强的剑，凌晨四点起床的偏执狂' },
+          to: { cls: 'BERSERKER', name: '虎哥 ＆ 刀哥', sub: '整活二人组，用吵闹掩盖难过' },
+          theme: 'berserker', line: '「你叫错了。」', hit: 1200, dur: 7000
+        }, function () {});
+      }, 400);
+    } else if (m[1] === 'misfit') {
+      /* 错位召唤 if 线：相性 E，直接跳到序章那一格 */
+      E.create(preset); screen('screen-game');
+      var smf = E.state();
+      smf.affinity.level = 'E';
+      smf.s.flags.misfit = true;
+      smf.s.slot = 2;
+      renderSlot();
+    } else if (m[1] === 'idf') {
+      /* 身份线：k=teacher / ruler / foreigner */
+      var kk = ((location.hash || '').match(/k=(\w+)/) || [])[1] || 'teacher';
+      var mid = kk === 'ruler' ? 'zhaotiezhu' : kk === 'foreigner' ? 'linxiaoman' : 'zoulijun';
+      E.create(preset);
+      var si = E.state();
+      si.masterId = mid;
+      si.servantId = G.master(mid).servant;
+      si.role = kk;
+      si.s.day = 1; si.s.slot = 0;
+      si.s.flags.rollcall_1 = true; si.s.flags.free_1 = true;
+      screen('screen-game'); renderSlot();
     } else if (m[1] === 'bond') {
       E.create(preset); screen('screen-game');
       var sb = E.state(); sb.s.day = 2; sb.s.slot = 2; renderSlot();

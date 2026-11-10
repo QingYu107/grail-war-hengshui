@@ -45,10 +45,12 @@
 
   function score(answers) {
     var sv = {}, rt = {}, pe = {}, stat = {}, four = {};
+    var role = null;
     G.QUIZ.forEach(function (q) {
       var a = answers[q.id];
       var opt = q.options.filter(function (o) { return o.key === a; })[0];
       if (!opt) return;
+      if (opt.role) role = opt.role;
       Object.keys(opt.servant || {}).forEach(function (k) { sv[k] = (sv[k] || 0) + opt.servant[k]; });
       Object.keys(opt.route || {}).forEach(function (k) { rt[k] = (rt[k] || 0) + opt.route[k]; });
       Object.keys(opt.persona || {}).forEach(function (k) { pe[k] = (pe[k] || 0) + opt.persona[k]; });
@@ -63,33 +65,60 @@
        归一化之后每个从者的先验被拉平，真正决定结果的是你答案的倾向。
        平手用答案哈希挑——同一个答案永远抽出同一个从者，但整体分布是均匀的。 */
     var order = ['saber', 'archer', 'lancer', 'rider', 'caster', 'assassin', 'berserker', 'ruler', 'foreigner'];
+    /* 身份决定你能召到谁：御主与从者是一一对应的（模组 6.3 的九张预设卡）。
+       学生六席对六骑常规职阶；老师对 Caster / Ruler；学生会与教务处对 Foreigner / Ruler。
+       不在池里的从者连候选都不是，不是「权重低」——这条界不能被题库加权冲掉。 */
+    var ROLE_POOL = {
+      student: ['saber', 'archer', 'lancer', 'rider', 'assassin', 'berserker'],
+      teacher: ['caster', 'ruler'],
+      staff: ['foreigner', 'ruler']
+    };
+    var pool = ROLE_POOL[role] || order;
+    /* Ruler 同时是两个身份池的候选（老师 / 学生会），不加约束的话它的出现率会是别人的两倍。
+       给它一点固定折扣，让九骑的出场率靠近一些。 */
+    var ROLE_PENALTY = { ruler: 0.05 };
     var cap = servantCap();
     var h = answerHash(answers || {});
     var best = null, bestScore = -1, tie = [];
-    order.forEach(function (id) {
+    pool.forEach(function (id) {
       var raw = sv[id] || 0;
-      var s = cap[id] ? raw / cap[id] : 0;
+      var s = (cap[id] ? raw / cap[id] : 0) - (ROLE_PENALTY[id] || 0);
       if (s > bestScore + 1e-9) { bestScore = s; best = id; tie = [id]; }
       else if (Math.abs(s - bestScore) <= 1e-9) { tie.push(id); }
     });
+    if (!best) best = order[0];
     if (tie.length > 1) best = tie[h % tie.length];
-    // 御主：按 persona 命中数挑预设卡；相性等级按关键词命中数
+    // 御主：一一对应。best 的从者归谁，御主就是谁——预设卡与从者的对应关系是硬的。
     var master = null, mBest = -1;
-    G.MASTERS.forEach(function (m) {
+    var byServant = G.MASTERS.filter(function (m) { return m.servant === best; });
+    (byServant.length ? byServant : G.MASTERS).forEach(function (m) {
       var tags = masterTags(m);
       var hit = tags.filter(function (t) { return pe[t]; }).reduce(function (a, t) { return a + (pe[t] || 0); }, 0);
-      if (m.servant === best) hit += 7.0;      // 本命优先：预设卡与从者的对应关系足够硬
+      if (m.servant === best) hit += 7.0;
       if (hit > mBest) { mBest = hit; master = m; }
     });
     var servant = G.servant(best);
     var hits = servant.keywords.filter(function (k) { return personaCovers(k, pe); });
     var level = hits.length >= 3 ? 'A+' : hits.length === 2 ? 'A' : hits.length === 1 ? 'C' : 'E';
+    /* 错位：一个关键词都没命中。这时候「本该配给你」的那一骑召不出来，
+       圣杯改去池子里最反相性的那一骑——所以御主卡按「本该」的那位给，
+       从者换成最低分的那位。两张牌对不上，就是错位。 */
+    var misfitFrom = null;
+    if (level === 'E') {
+      var worst = null, worstScore = Infinity;
+      pool.forEach(function (id) {
+        var s = cap[id] ? (sv[id] || 0) / cap[id] : 0;
+        if (s < worstScore - 1e-9) { worstScore = s; worst = id; }
+      });
+      if (worst && worst !== best) { misfitFrom = best; best = worst; }
+    }
     // 职介线
     var rid = 'intel', rBest = -1;
     G.ROUTES.forEach(function (r) { var v = rt[r.id] || 0; if (v > rBest) { rBest = v; rid = r.id; } });
     return {
       servantId: best, masterId: master.id, routeId: rid,
-      affinity: { level: level, hits: hits, all: servant.keywords },
+      role: role || 'student',
+      affinity: { level: level, hits: hits, all: servant.keywords, misfitFrom: misfitFrom },
       persona: pe, statMod: stat, four: four, rawServant: sv, rawRoute: rt
     };
   }
@@ -105,20 +134,28 @@
     };
     return map[m.id] || t;
   }
-  function personaCovers(keyword, pe) {
-    var map = {
-      '偏执': ['hard', 'proud'], '凌晨': ['night'], '自我要求': ['hard', 'study', 'body'],
-      '焦虑': ['anxious', 'study'], '出路': ['study', 'stuck'], '替别人做决定': ['adult', 'clever', 'group'],
-      '被网暴': ['online', 'quiet'], '只会一个英雄': ['online', 'loud'], '键盘': ['online'],
-      '被安排': ['avoid', 'obey'], '机械': ['body'], '被围观': ['seen', 'loud'],
-      '自欺': ['proud', 'adult'], '玄学': ['proud'], '嘴硬': ['proud', 'loud'],
-      '厌世': ['quiet', 'lazy'], '拒绝被安排': ['avoid'], '夜里活动': ['night'],
-      '二人组': ['group', 'loyal'], '义气': ['loyal', 'warm'], '暴力整活': ['loud'],
-      '纯真': ['warm'], '流量': ['seen', 'online'], '被看': ['seen'],
-      '背锅': ['clever'], '舆论': ['online', 'loud'], '规则本身': ['obey', 'adult']
-    };
-    return (map[keyword] || []).some(function (t) { return (pe[t] || 0) >= 3; });
+  /* 相性关键词命中：以前是「这个 tag 出现过一次就算命中」（阈值 3，而单题就给 2–3 分），
+     结果人人命中两三个关键词，A+ 占八成、错位召唤一次也抽不到。
+     现在改成累计强度过线才算命中，阈值可调（见 KEY_THRESH）。 */
+  var KEY_THRESH = 8;
+  var KEY_MAP = {
+    '偏执': ['hard', 'proud'], '凌晨': ['night'], '自我要求': ['hard', 'study', 'body'],
+    '焦虑': ['anxious', 'study'], '出路': ['study', 'stuck'], '替别人做决定': ['adult', 'clever', 'group'],
+    '被网暴': ['online', 'quiet'], '只会一个英雄': ['online', 'loud'], '键盘': ['online'],
+    '被安排': ['avoid', 'obey'], '机械': ['body'], '被围观': ['seen', 'loud'],
+    '自欺': ['proud', 'adult'], '玄学': ['proud'], '嘴硬': ['proud', 'loud'],
+    '厌世': ['quiet', 'lazy'], '拒绝被安排': ['avoid'], '夜里活动': ['night'],
+    '二人组': ['group', 'loyal'], '义气': ['loyal', 'warm'], '暴力整活': ['loud'],
+    '纯真': ['warm'], '流量': ['seen', 'online'], '被看': ['seen'],
+    '背锅': ['clever'], '舆论': ['online', 'loud'], '规则本身': ['obey', 'adult']
+  };
+  function keywordStrength(keyword, pe) {
+    var tags = KEY_MAP[keyword] || [];
+    var s = 0;
+    tags.forEach(function (t) { s += (pe[t] || 0); });
+    return s;
   }
+  function personaCovers(keyword, pe) { return keywordStrength(keyword, pe) >= KEY_THRESH; }
 
   /* ---------- 状态 ---------- */
   var S = null;
@@ -164,6 +201,7 @@
     return {
       v: 1, t: Date.now(),
       answers: res.answers, routeId: res.routeId, masterId: res.masterId, servantId: res.servantId,
+      role: res.role || 'student',
       affinity: res.affinity, four: res.four, s: s,
       log: [], history: [], pending: null, ended: null
     };
@@ -419,6 +457,8 @@
   window.GRAIL.Engine = {
     d: d, pick: pick, clamp: clamp,
     score: score,
+    _setThresh: function (v) { KEY_THRESH = v; },
+    _thresh: function () { return KEY_THRESH; },
     create: function (answers) {
       var res = score(answers); res.answers = answers;
       S = newState(res);
