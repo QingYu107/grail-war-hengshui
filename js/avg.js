@@ -154,6 +154,7 @@
     var el;
     if (kind === 'broadcast') {
       el = ensureLayer('fx-broadcast');
+      try { if (window.GrailSFX && window.GrailSFX.glitch) window.GrailSFX.glitch(); } catch (e) {}
       var lines = (data.lines || []).map(function (t, i) {
         return '<div class="line' + (i === 0 ? ' big' : '') + '" style="animation-delay:' + (300 + i * 520) + 'ms">' + t + '</div>';
       }).join('');
@@ -185,6 +186,7 @@
       schedule(1200 + lines.length * 760, done);
     } else if (kind === 'roll') {
       el = ensureLayer('fx-roll');
+      try { if (window.GrailSFX && window.GrailSFX.dice) window.GrailSFX.dice(); } catch (e) {}
       var names = data.names || [];
       var spans = names.map(function (n, i) {
         return '<span style="animation-delay:' + (i * 90) + 'ms">' + n + '</span>';
@@ -195,6 +197,7 @@
       schedule(names.length * 90 + 2400, done);
     } else if (kind === 'impact') {
       el = ensureLayer('fx-impact');
+      try { if (window.GrailSFX && window.GrailSFX.stamp) window.GrailSFX.stamp(); } catch (e) {}
       el.classList.add('shake');
       el.innerHTML = '<div class="boom">' + (data.title || '撞击') + '</div><div class="sub">' + (data.sub || '') + '</div>';
       schedule(1700, done);
@@ -298,6 +301,8 @@
         }
       } catch (e) {}
       el = ensureLayer('fx-noble');
+      setTimeout(function () { try { if (window.GrailSFX && window.GrailSFX.clang) window.GrailSFX.clang(); } catch (e) {} }, 160);
+      setTimeout(function () { try { if (window.GrailSFX && window.GrailSFX.boom) window.GrailSFX.boom(); } catch (e) {} }, 900);
       el.style.setProperty('--sig', data.color || '#b23a2e');
       var ttl = data.title || '宝具';
       var chars = '';

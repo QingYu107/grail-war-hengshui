@@ -40,11 +40,15 @@
   function lib() { return window.GRAIL_TIMELINE || {}; }
   function endings() { return (window.GRAIL && window.GRAIL.ENDINGS) || {}; }
   function order() {
-    return Object.keys(endings()).filter(function (id) { return !!lib()[id]; });
+    var ids = Object.keys(endings()).filter(function (id) { return !!lib()[id]; });
+    /* IF 线不进 11 条结局，单独挂在最后 */
+    if (lib().MX) ids.push('MX');
+    return ids;
   }
   function seenCount() { var a = readArchive(); return Object.keys(a.endings || {}).length; }
   function unlocked() { return unlockAll() || seenCount() >= NEED; }
   function seenEnding(id) {
+    if (id === 'MX') return true;          /* IF 线不需要解锁 */
     if (unlockAll()) return true;
     var a = readArchive(); return !!((a.endings || {})[id]);
   }
@@ -149,7 +153,7 @@
     }).join('');
     return '<div class="tl-head">' +
       '<div class="tl-hl"><b>' + esc(C.title) + '</b><span class="tl-idx">' + (ch + 1) + ' / ' + L.chapters.length + '</span></div>' +
-      '<div class="tl-hsub">' + (got ? esc(L.title + '　·　' + (L.sub || '')) : 'E' + eid.replace('E', '') + '　·　未解锁的结局线') + '</div>' +
+      '<div class="tl-hsub">' + (got ? esc(L.title + '　·　' + (L.sub || '')) : (L.no || eid) + '　·　未解锁的结局线') + '</div>' +
       (castHtml ? '<div class="tl-cast">' + castHtml + '</div>' : '') +
       '</div>' +
       '<div class="tl-body" id="tl-body"></div>' +
@@ -226,6 +230,18 @@
       if (c.node.classList.contains('played') || c.node.dataset.playing) return;
       if (state.busy) return;
       state.busy = true;
+      /* 每种演出都要有自己的声音：对轰与兽换曲，其余至少给一下音效 */
+      try {
+        var A = window.GrailAudio, S = window.GrailSFX, it = c.item;
+        if (it.fx === 'clash') { if (A) A.play(it.bgm || 'battle', { quick: true }); }
+        else if (it.fx === 'beast') { if (A) A.play('beast'); }
+        else if (it.fx === 'summon' && it.id) { if (A) A.play(it.id, { quick: true }); }
+        else if (it.fx === 'noble') { if (A) A.play(it.theme || 'battle', { quick: true }); }
+        if (it.fx === 'roll' && S) S.dice();
+        if (it.fx === 'impact' && S) S.stamp();
+        if (it.fx === 'broadcast' && S) S.glitch();
+        if (it.fx === 'glitch' && S) S.glitch();
+      } catch (e) {}
       c.node.dataset.playing = '1';
       c.node.classList.add('playing');
       var done = function () {

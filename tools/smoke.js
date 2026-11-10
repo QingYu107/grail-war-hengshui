@@ -211,11 +211,11 @@ console.log('judge cases:', cases.length - problems.filter(function (p) { return
    验收口径见 docs/TIMELINE.md + docs/CANON.md：
    5–7 章、4000 字以上、至少 4 组御主、至少 1 处演出、不许出现 6012、
    不许把孙笑川写成「第七位从者」。 */
-['timeline', 'timeline_e2e9', 'timeline_e3e8', 'timeline_e4e11', 'timeline_e5e10', 'timeline_e6e7'].forEach(function (f) {
+['timeline', 'timeline_e2e9', 'timeline_e3e8', 'timeline_e4e11', 'timeline_e5e10', 'timeline_e6e7', 'timeline_if'].forEach(function (f) {
   try { require('../js/data/' + f + '.js'); } catch (e) { /* 还没交的那几条先跳过 */ }
 });
 var TL = window.GRAIL_TIMELINE || {};
-var TL_FX = ['clash', 'noble', 'summon', 'broadcast', 'roll', 'impact', 'glitch', 'beast', 'static', 'mirror', 'bleed', 'dissolve'];
+var TL_FX = ['clash', 'missummon', 'noble', 'summon', 'broadcast', 'roll', 'impact', 'glitch', 'beast', 'static', 'mirror', 'bleed', 'dissolve'];
 var TL_MASTERS = ['江野', '张远', '吴迪', '王大力', '邹丽君', '李嘉豪', '高鹏', '赵铁柱', '林小满'];
 var tlStats = [];
 Object.keys(TL).forEach(function (id) {
@@ -248,4 +248,5 @@ Object.keys(TL).forEach(function (id) {
 console.log('timeline:', tlStats.join('　') || 'none');
 
 console.log('ending keys ok:', Object.keys(G.ENDINGS).length === 11);
+if (problems.length) console.log('PROBLEMS:', problems);
 process.exit(problems.length ? 1 : 0);

@@ -467,6 +467,27 @@ const FLOW = `
       await c2.shot(path.join(ROOT, 'tools', 't_tl_locked.png'));
       c2.ws.close();
       console.log(L.join('\n'));
+    } else if (mode === 'audit') {
+      const probe = "JSON.stringify({sfx:!!window.GrailSFX, sfxMuted: window.GrailSFX&&window.GrailSFX.isMuted(), audio:!!window.GrailAudio, theme: window.GrailAudio&&window.GrailAudio.current(), tracks:(window.GrailAudio&&window.GrailAudio.tracks?window.GrailAudio.tracks.length:-1), settings: localStorage.getItem('grail_settings_v1'), speed: localStorage.getItem('grail_speed'), err: ((document.getElementById('errbox')||{}).textContent||'none').slice(0,220)})";
+      const c = await openPage(BASE + '#dev=noble', 1100, 900, false);
+      await sleep(1600);
+      console.log('noble env: ' + await c.eval(probe));
+      await c.shot(path.join(ROOT, 'tools', 't_audit_noble.png'));
+      c.ws.close();
+      const c2 = await openPage(BASE + '#dev=clash', 1100, 900, false);
+      await sleep(2200);
+      console.log('clash env: ' + await c2.eval(probe));
+      c2.ws.close();
+      const c3 = await openPage(BASE + '#dev=missum', 1100, 900, false);
+      await sleep(2200);
+      console.log('missum env: ' + await c3.eval(probe));
+      c3.ws.close();
+      const c4 = await openPage(BASE + '#dev=misfit', 1100, 900, false);
+      await sleep(2200);
+      const direct = await c4.eval("(function(){try{window.GrailAVG.stinger('missummon',{from:{cls:'SABER',name:'A'},to:{cls:'B',name:'B'}},function(){}) ; return JSON.stringify({layer:!!document.querySelector('.fx-layer'), cls:(document.querySelector('.fx-layer')||{}).className});}catch(e){return 'ERR '+e.message;}})()");
+      console.log('direct stinger: ' + direct);
+      console.log('misfit(dev): ' + await c4.eval("JSON.stringify({fx: !!document.querySelector('.fx-layer'), cls: (document.querySelector('.fx-layer')||{}).className, aff: GRAIL.Engine.state().affinity, flags: Object.keys(GRAIL.Engine.state().s.flags), haveVariant: !!GRAIL.STORY[0].slots[2].variant, err: ((document.getElementById('errbox')||{}).textContent||'none').slice(0,220)})"));
+      c4.ws.close();
     } else if (mode === 'idf') {
       /* 身份线：过场 → 选项 → 继续 → 必须回到正常时段，不能卡住 */
       const c = await openPage(BASE + '#dev=idf&k=teacher', 1200, 1000, false);

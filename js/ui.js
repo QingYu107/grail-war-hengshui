@@ -1,4 +1,4 @@
-/* UI 渲染与流程 */
+﻿/* UI 渲染与流程 */
 (function () {
   'use strict';
   var G = window.GRAIL;
@@ -682,7 +682,8 @@
     d7c: { kind: 'beast', data: { title: '攀比', sub: '你是第几？' } }
   };
   function stingerFor(slot, st) {
-    var cfg = STINGER[slot.id];
+    /* 错位那一格的 id 是 p3m（variant 换过），配置仍按 p3 取 */
+    var cfg = STINGER[slot.id] || (slot.id === 'p3m' ? STINGER.p3 : null);
     if (!cfg) return null;
     var key = 'fx_' + slot.id;
     if (st.s.flags[key]) return null;
@@ -700,7 +701,7 @@
     }
     /* 错位召唤：进房间那一张召唤卡照常播——正常的那一骑、正常的契约成立。
        撕开是在卡片自己身上发生的（avg.js 的 missummon），这里只负责把两张牌给它。 */
-    if (cfg.kind === 'summon' && slot.id === 'p3' && st.s.flags.misfit && st.affinity && st.affinity.misfitFrom) {
+    if (cfg.kind === 'summon' && (slot.id === 'p3' || slot.id === 'p3m') && st.s.flags.misfit && st.affinity && st.affinity.misfitFrom) {
       var fsv = G.servant(st.affinity.misfitFrom);
       var tsv = G.servant(st.s.servantId);
       data = {
@@ -989,7 +990,10 @@
   /* 相性 E 的 if 线：同一格换成「错位召唤」那一版 */
   function slotFor(st) {
     var s = currentSlot();
-    if (s && s.variant && s.variant.misfit && st.s.flags.misfit) return s.variant.misfit;
+    if (!s || !s.variant) return s;
+    if (st.s.flags.misfit && s.variant.misfit) return s.variant.misfit;
+    var idn = identityOf(st);
+    if (idn !== 'student' && s.variant[idn]) return s.variant[idn];
     return s;
   }
 
@@ -2909,7 +2913,7 @@
       E.create(preset); screen('screen-game'); renderSlot();
       var svn = G.servant(E.state().servantId);
       setTimeout(function () {
-        window.GrailAVG.stinger('noble', { cls: svn.cls, title: svn.noble[0][0], sub: svn.one || '', color: svn.tint || '#b23a2e' }, function () {});
+        window.GrailAVG.stinger('noble', { cls: svn.cls, title: svn.noble[0][0], sub: svn.one || '', color: svn.tint || '#b23a2e', theme: svn.theme }, function () {});
       }, 400);
     } else if (m[1] === 'summon') {
       E.create(preset); screen('screen-game'); renderSlot();
@@ -3069,6 +3073,7 @@
       E.create(preset); screen('screen-game');
       var smf = E.state();
       smf.affinity.level = 'E';
+      smf.affinity.misfitFrom = smf.servantId === 'saber' ? 'archer' : 'saber';
       smf.s.flags.misfit = true;
       smf.s.slot = 2;
       renderSlot();
@@ -3081,8 +3086,12 @@
       si.masterId = mid;
       si.servantId = G.master(mid).servant;
       si.role = kk;
-      si.s.day = 1; si.s.slot = 0;
-      si.s.flags.rollcall_1 = true; si.s.flags.free_1 = true;
+      var dd = ((location.hash || '').match(/d=(\d+)/) || [])[1];
+      si.s.day = dd ? +dd : 1; si.s.slot = 0;
+      si.s.flags['rollcall_' + si.s.day] = true;
+      si.s.flags['free_' + si.s.day] = true;
+      si.s.flags['inter_' + si.s.day] = true;
+      if (dd) si.s.flags['idf_' + si.s.day] = true;   /* 指定日期时直接看主线那一格 */
       screen('screen-game'); renderSlot();
     } else if (m[1] === 'bond') {
       E.create(preset); screen('screen-game');
