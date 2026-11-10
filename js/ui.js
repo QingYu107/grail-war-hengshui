@@ -424,15 +424,15 @@
     layer.style.cssText = 'position:fixed;inset:0;z-index:80;background:rgba(9,11,10,.72);display:flex;align-items:center;justify-content:center;padding:20px';
     layer.innerHTML = '<div style="background:#f4ecda;color:#1c1a16;max-width:720px;width:100%;max-height:84vh;overflow:auto;padding:32px 34px;font-family:var(--serif);line-height:2;box-shadow:0 20px 60px rgba(0,0,0,.5)">' +
       '<div style="font-family:var(--hei);font-size:11px;letter-spacing:.3em;color:#8c2b22;margin-bottom:10px">档案说明</div>' +
-      '<h2 style="margin:0 0 12px;font-size:24px">这份东西怎么玩</h2>' +
-      '<p>改编自《圣杯战争·衡水：凌晨四点的圣杯》（COC 7th 非官方同人模组），单人化处理：七组御主中，其余六组由系统扮演。</p>' +
-      '<p>九道登记题决定你的从者、御主卡与职介线。相性分 A+ / A / C / E 四档，取决于答案命中了从者几个关键词。</p>' +
-      '<p>序章加七天。每天三段主线、一次自由行动，入夜之后还有一段「熄灯以后」——四选一，选完才翻篇。选项卡上只告诉你这一手要动什么本事，不给成功率，也不写后果。</p>' +
-      '<p>SAN 是唯一的血条，曝光度满 10 会终止战争；兽的进度条每过一夜涨一格，当天你踩过刹车就不涨——夜里早睡是少数能按住它的办法。</p>' +
+      '<h2 style="margin:0 0 12px;font-size:24px">我做的这是什么东西</h2>' +
+      '<p>我把《圣杯战争·衡水：凌晨四点的圣杯》（COC 7th 非官方同人模组）改成了单人版：七组御主里，其余六组由系统扮演。</p>' +
+      '<p>九道登记题决定你召到谁、拿哪张御主卡、走哪条职介线。相性分 A+ / A / C / E 四档，看你填的答案命中了从者几个关键词。</p>' +
+      '<p>序章加七天。每天三段主线、一次自由行动，入夜之后还有一段「熄灯以后」——四选一，选完才翻篇。选项卡上我只写这一手要动什么本事，不给成功率，也不写后果。</p>' +
+      '<p>SAN 是唯一的血条，曝光度满 10 会终止战争；兽的进度条每过一夜涨一格，当天你踩过刹车就不涨——夜里早睡是少数能按住它的办法。精神掉档以后，判定、交手、连选项本身都会跟着不对劲。</p>' +
       '<p>战斗五手：交手 / 架住 / 读招 / 宝具 / 撤。敌方每回合先露一句预兆，读招能把它翻成明确意图，同时叠一层破绽；破绽满三层，下一手必中。</p>' +
-      '<p>从者羁绊 LV.1–3：三段主线加一段加演。等级进战斗（伤害 / 减伤 / 判定 / 一次替身），也进结局。</p>' +
+      '<p>从者羁绊 LV.1–3：三段主线加两段加演。等级进战斗（伤害 / 减伤 / 判定 / 一次替身），也进结局。</p>' +
       '<p>结局 11 个，判定顺序：兽满 → 曝光满 → 门开 → 归因 → 全灭 → 断电 → 兽饿死 → 七人齐 → 许愿。</p>' +
-      '<p style="color:#6b6355;font-size:13px">架空谐仿创作，人物与机构均为虚构处理，与现实中的任何个人、团体、学校无关。</p>' +
+      '<p style="color:#6b6355;font-size:13px">架空谐仿创作，人物与机构都是虚构处理，与现实中的任何个人、团体、学校无关。</p>' +
       '<button class="btn btn--solid" id="about-close" style="margin-top:10px">知道了</button></div>';
     document.body.appendChild(layer);
     layer.onclick = function (e) { if (e.target === layer) layer.remove(); };
@@ -2653,6 +2653,9 @@
           dur: 6000
         }, function () {});
       }, 500);
+    } else if (m[1] === 'about') {
+      E.create(preset); screen('screen-game'); renderSlot();
+      setTimeout(showAbout, 320);
     } else if (m[1] === 'settings') {
       E.create(preset); screen('screen-game'); renderSlot();
       setTimeout(openSettings, 320);

@@ -19,7 +19,7 @@ GIT = os.path.join(os.environ['USERPROFILE'], '.dsh', 'tools', 'git', 'cmd', 'gi
 OWNER = 'QingYu107'
 REPO = 'grail-war-hengshui'
 BRANCH = 'main'
-MSG = '剧情扩容 / 共通线 / SAN 分档 / 故障演出 / 设置与关系页'
+MSG = '介绍页与档案说明改成第一人称'
 
 
 def token():
