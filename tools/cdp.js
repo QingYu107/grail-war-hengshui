@@ -120,7 +120,7 @@ const FLOW = `
   await sleep(300);
   if (!q('#screen-quiz.is-active')) { if (b) b.click(); await sleep(300); }
   L.push('quiz active ' + !!q('#screen-quiz.is-active') + ' choices ' + document.querySelectorAll('#quiz-root .choice').length);
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 20; i++) {
     if (!q('#screen-quiz.is-active')) break;
     const cs = document.querySelectorAll('#quiz-root .choice');
     if (!cs.length) { L.push('NO CHOICE at ' + i); break; }
@@ -179,7 +179,7 @@ const FLOW = `
         await c.eval("document.querySelector('#btn-start').click()"); await sleep(400);
       }
       await c.shot(path.join(ROOT, 'tools', 'm_quiz.png'));
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 20; i++) {
         const on = await c.eval("!!document.querySelector('#screen-quiz.is-active')");
         if (!on) break;
         await c.eval("document.querySelector('#quiz-root .choice').click()");
@@ -300,7 +300,7 @@ const FLOW = `
       if (!await c.eval("!!document.querySelector('#screen-quiz.is-active')")) {
         await c.eval("document.querySelector('#btn-start').click()"); await sleep(400);
       }
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 20; i++) {
         if (!await c.eval("!!document.querySelector('#screen-quiz.is-active')")) break;
         await c.eval("document.querySelector('#quiz-root .choice').click()"); await sleep(140);
       }
@@ -320,7 +320,7 @@ const FLOW = `
       await c.eval("document.querySelector('#btn-start').click()");
       await sleep(400);
       if (!await c.eval("!!document.querySelector('#screen-quiz.is-active')")) { await c.eval("document.querySelector('#btn-start').click()"); await sleep(400); }
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 20; i++) {
         if (!await c.eval("!!document.querySelector('#screen-quiz.is-active')")) break;
         await c.eval("document.querySelector('#quiz-root .choice').click()"); await sleep(130);
       }
@@ -362,7 +362,7 @@ const FLOW = `
       await c.eval("document.querySelector('#btn-start').click()");
       await sleep(400);
       if (!await c.eval("!!document.querySelector('#screen-quiz.is-active')")) { await c.eval("document.querySelector('#btn-start').click()"); await sleep(400); }
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 20; i++) {
         if (!await c.eval("!!document.querySelector('#screen-quiz.is-active')")) break;
         await c.eval("document.querySelector('#quiz-root .choice').click()"); await sleep(120);
       }
@@ -655,7 +655,7 @@ const FLOW = `
       await c.eval("document.querySelector('#btn-start').click()");
       await sleep(350);
       if (!await c.eval("!!document.querySelector('#screen-quiz.is-active')")) { await c.eval("document.querySelector('#btn-start').click()"); await sleep(350); }
-      for (let i = 0; i < 12; i++) {
+      for (let i = 0; i < 20; i++) {
         if (!await c.eval("!!document.querySelector('#screen-quiz.is-active')")) break;
         await c.eval("document.querySelector('#quiz-root .choice').click()"); await sleep(110);
       }
@@ -679,6 +679,7 @@ const FLOW = `
           const mapDone = q('#map-done'); if (mapDone) { mapDone.click(); return 'map-done'; }
           const mapCard = q('.map-card'); if (mapCard) { mapCard.click(); return 'map-card'; }
           const wish = q('#wish-list .choice'); if (wish) { wish.click(); return 'wish'; }
+          const idf = q('#idf-opts .choice:not([disabled])'); if (idf) { idf.click(); return 'idf'; }
           const opts = q('#opts .choice:not([disabled])'); if (opts) { opts.click(); return 'opt'; }
           const next = q('#beat-actions .btn--solid'); if (next) { next.click(); return 'next'; }
           return 'STUCK';

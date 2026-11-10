@@ -2710,7 +2710,7 @@
      这游戏的核心动作就三个：选一项、点继续、关弹层。全靠鼠标会很累。
      数字键 / A–D 选选项，回车或空格继续，Esc 关弹层或跳过打字机。 */
   function keyChoices() {
-    var groups = ['#opts .choice', '#night-opts .choice', '#wish-list .choice', '.bmenu .btn'];
+    var groups = ['#opts .choice', '#idf-opts .choice', '#night-opts .choice', '#wish-list .choice', '.bmenu .btn'];
     for (var i = 0; i < groups.length; i++) {
       var arr = Array.prototype.slice.call(document.querySelectorAll(groups[i]))
         .filter(function (b) { return !b.disabled; });
