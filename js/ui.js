@@ -63,6 +63,7 @@
     t.textContent = msg; t.classList.add('on');
     clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.classList.remove('on'); }, 2200);
   }
+  window.GrailToast = toast;
   function audio(theme) {
     try { if (window.GrailAudio) window.GrailAudio.play(theme); } catch (e) {}
   }
@@ -369,16 +370,40 @@
     layer.className = 'modal-layer';
     layer.innerHTML = '<div class="modal wide">' +
       '<div class="mk">档 案 馆</div>' +
+      '<div class="ac-tabs">' +
+      '<button class="ac-tab on" data-pane="end">结局图鉴</button>' +
+      '<button class="ac-tab" data-pane="tl">时间线</button>' +
+      '</div>' +
+      '<div id="ac-pane-end">' +
       '<div class="ac-stat">通关 ' + (a.cleared || 0) + ' 次　·　已见结局 ' + Object.keys(seen).length + ' / ' + ids.length + '　·　同行从者 ' + svIds.length + ' / 9' +
       '　·　成就 ' + Object.keys(a.ach || {}).length + ' / ' + ACHIEVEMENTS.length + '</div>' +
       '<h5>结局图鉴</h5><div class="ac-grid">' + endingCards + '</div>' +
       '<h5>同行过的从者（最高羁绊）</h5><p>' + svLine + '</p>' +
       '<h5>成就</h5><div class="ac-achs">' + achLine + '</div>' +
       '<p class="ac-tip">没到手的内容不会提前剧透。再走一遍，把缺的补上。</p>' +
+      '</div>' +
+      '<div id="ac-pane-tl" hidden>' +
+      (window.GrailTimeline ? window.GrailTimeline.panelHTML() : '<p class="ac-tip">时间线数据没有装进来。</p>') +
+      '</div>' +
       '<div class="modal-foot"><button class="btn btn--solid" id="ac-close">关上</button></div></div>';
     document.body.appendChild(layer);
     layer.onclick = function (e) { if (e.target === layer) layer.remove(); };
     document.getElementById('ac-close').onclick = function () { layer.remove(); };
+    /* 两个标签：图鉴 / 时间线 */
+    var tlMounted = false;
+    layer.querySelectorAll('.ac-tab').forEach(function (b) {
+      b.onclick = function () {
+        var k = b.getAttribute('data-pane');
+        layer.querySelectorAll('.ac-tab').forEach(function (x) { x.classList.toggle('on', x === b); });
+        var pe = layer.querySelector('#ac-pane-end'), pt = layer.querySelector('#ac-pane-tl');
+        if (pe) pe.hidden = k !== 'end';
+        if (pt) pt.hidden = k !== 'tl';
+        if (k === 'tl' && !tlMounted && window.GrailTimeline) {
+          window.GrailTimeline.mount(pt);
+          tlMounted = true;
+        }
+      };
+    });
   }
 
   function initTitle() {
@@ -748,7 +773,7 @@
     var R = C.rollcall || {};
     var gone = goneNames(st);
     var rows = [];
-    rows.push('应到 6012 人，实到 6012 人。');
+    rows.push('应到 6000 人，实到 6000 人。');
     if (R.alive) rows.push(R.alive(st.s.alive));
     if (gone.length && R.gone) rows.push(gone.map(R.gone).join('　'));
     if (R.beast && R.beast[Math.min(7, st.s.beast || 0)]) rows.push(R.beast[Math.min(7, st.s.beast || 0)]);
@@ -2794,6 +2819,47 @@
         log('DONE errbox: ' + errOf());
       }, 200]);
       run();
+    } else if (m[1] === 'tl') {
+      /* 时间线自测：先伪造 6 个已见结局 → 档案馆 → 时间线标签 → 读 E1 最后一章（有对轰） */
+      var ar0 = readArchive();
+      ar0.endings = ar0.endings || {};
+      ['E1', 'E2', 'E4', 'E8', 'E9', 'E11'].forEach(function (id) { ar0.endings[id] = ar0.endings[id] || 1; });
+      ar0.read = {}; ar0.readDone = {};
+      writeArchive(ar0);
+      setTimeout(function () {
+        openArchive();
+        var tab = document.querySelector('.ac-tab[data-pane="tl"]');
+        if (tab) tab.click();
+      }, 300);
+    } else if (m[1] === 'tllock') {
+      /* 未解锁的样子：清掉结局数 */
+      var ar1 = readArchive(); ar1.endings = {}; writeArchive(ar1);
+      setTimeout(openArchive, 300);
+    } else if (m[1] === 'tlread') {
+      var km = (location.hash || '').match(/k=(E\d+)/);
+      var hh = (location.hash || '').match(/c=(\d+)/);
+      var ar2 = readArchive();
+      ar2.endings = {}; ['E1', 'E2', 'E4', 'E8', 'E9', 'E11'].forEach(function (id) { ar2.endings[id] = 1; });
+      writeArchive(ar2);
+      setTimeout(function () {
+        var lay = window.GrailTimeline.open(km ? km[1] : 'E1');
+        if (hh && lay) {
+          var btn = lay.querySelector('#tl-toc');
+          if (btn) btn.click();
+          var row = lay.querySelectorAll('.tl-toc-row')[+hh[1] - 1];
+          if (row) row.click();
+        }
+      }, 300);
+    } else if (m[1] === 'clash') {
+      E.create(preset); screen('screen-game'); renderSlot();
+      setTimeout(function () {
+        window.GrailAVG.stinger('clash', {
+          bgm: 'battle', hit: 1200, dur: 6000,
+          left: { cls: 'SABER', name: '凌晨四点的洛杉矶', who: '科比 · 江野', color: '#8f2b22' },
+          right: { cls: 'RULER', name: '这一切都是孙笑川干的', who: '孙笑川 · 赵铁柱', color: '#8a6a2a' },
+          verdict: '两块东西撞在一起的时候，没有声音。'
+        }, function () {});
+      }, 400);
     } else if (m[1] === 'bond') {
       E.create(preset); screen('screen-game');
       var sb = E.state(); sb.s.day = 2; sb.s.slot = 2; renderSlot();

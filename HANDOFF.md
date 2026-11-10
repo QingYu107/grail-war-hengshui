@@ -3,9 +3,20 @@
 > 最后更新：2026-11-10。项目：`E:\dsh-workspace\grail-war`
 > 远端：<https://github.com/QingYu107/grail-war-hengshui> · 在线版：<https://qingyu107.github.io/grail-war-hengshui/>
 
+## 接手先读这三份
+
+1. **本文件** —— 现状、命令、坑。
+2. `docs/TIMELINE.md` —— **下一件事的完整规格**（档案馆里的路线小说，11 条线）。
+3. `README.md` —— 面向玩家的功能说明，改玩法时要同步。
+
+推送走 skill：`gh-api-push`（本机 `~/.dsh/skills/gh-api-push/`），`git push` 在这台机器上不通。
+
 ## 0. 一句话现状
 
-游戏能从头玩到尾（序章 → 7 天 ×（时段 + 自由行动 + 夜行）→ 11 个结局），地图/战斗/月考/存档/档案馆/羁绊/设置页/关系档案都在；战斗是五指令 + 预兆 + 破绽，羁绊 LV.1–3 直接进战斗与结局，夜里做的事也进判定。本地与远端内容一致，但 **git 历史是分叉的**，且 **github.com:443 不通**——推送必须走 API 脚本。远端还是旧版（前两轮改动都未推）。
+游戏能从头玩到尾（序章 → 7 天 ×（点名 + 时段 + 自由行动 + 夜行）→ 11 个结局），
+地图/战斗/月考/存档/档案馆/羁绊/设置页/关系档案都在；文本全量 3.7 万字，单局读到约 1.5 万。
+战斗是五指令 + 预兆 + 破绽，羁绊 LV.1–3 直接进战斗与结局，SAN 分五档会咬人。
+本地与远端内容一致，但 **git 历史是分叉的**，且 **github.com:443 不通**——推送走 API（见 skill `gh-api-push`）。
 
 ## 1. 三条命令
 
@@ -28,7 +39,10 @@ $py="C:\Users\青雨\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\p
 & $node tools\cdp.js mobile         # 390×844 手机端截图与溢出检查
 
 # 推送（github.com 不通，只能走 API）
-& $py tools\gh_api_push.py          # 全量上传 ls-files → 建 tree/commit → 更新 ref
+& $py tools\gh_api_push.py          # 默认增量（只推暂存区改动）；全量加 --full
+
+# 推送这件事的完整流程、七个坑、验收清单，已整理成 skill：
+#   ~/.dsh/skills/gh-api-push/SKILL.md   （脚本：scripts/gh_api_push.py，参数化，换项目也能用）
 ```
 
 `tools/cdp.js` 里还有 `beastfight` / `panels` / `audio2` / `audio5` 等 mode，都是无头验证用的。
@@ -222,6 +236,8 @@ token 在 `tools/.gh_token`（已 gitignore），不需要就去 GitHub 吊销�
 
 ## 10. 第四轮：剧本体量与 SAN
 
+
+
 玩家反馈三件事：故事太短、故障/扭曲的抽象感不够、SAN 掉了没感觉。
 
 **先量了一下**（脚本见提交说明）：主线全部含所有分支 11,518 字，但单局只读得到 **4,772 字**；单个结局 443 字；一条羁绊线 710 字。7 天里每天约 600 字——不是「感觉短」，是真的短，差两到三倍。
@@ -263,5 +279,19 @@ Day6 走廊变形改用 `mirror`，E7 用 `bleed`，E2/E3 用 `static`，幻觉�
 & $node tools\cdp.js shot "…#dev=hall" tools\t_hall.png 1200 1200
 ```
 
+## 11. 第五轮：抽卡分配修复 + 下一件事
 
+**「老是抽到重复的从者」查出来两个真问题**（`Engine.score()`）：
 
+1. `order` 数组里**漏了 ruler** —— 登记题给了它 8 处加权，但它永远抽不到。
+2. 题库对不同职阶的加权次数本来就不一样（berserker/assassin 各 10 处、caster/saber 各 7 处），
+   直接比原始分 → 先验严重偏斜。3 万次随机模拟：berserker 22.1%、assassin 18.1%、
+   **caster 4.3%、saber 5.1%**，最大差 5 倍。所以会觉得「怎么老是那几个人」。
+
+修法：按每个职阶的**可达上限**归一化再比大小；平手不再按固定顺序排（那会让第一个永远赢），
+改用答案哈希挑——**同一个答案永远抽出同一个从者**，但整体分布均匀。
+修完 3 万次模拟：7.9%–13.3%，9 位全部可达。
+
+**下一件事**：`docs/TIMELINE.md`。档案馆里加「时间线」，通关一半（已见结局 ≥6）
+后解锁，11 条线对应 11 个结局，每条是一篇小说，群像，覆盖固定剧情在自己这条线上的走法。
+规格、数据结构、UI、验收清单都在那份文档里，按里面的三阶段做。

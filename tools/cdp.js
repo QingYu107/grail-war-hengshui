@@ -414,6 +414,69 @@ const FLOW = `
       await c.shot(path.join(ROOT, 'tools', 't_reroll.png'));
       console.log(L.join('\n'));
       c.ws.close();
+    } else if (mode === 'tl') {
+      /* 时间线：解锁判断 / 列表 / 阅读器 / 章节切换 / 进度记忆 / 宝具对轰演出 */
+      const L = [];
+      const c = await openPage(BASE + '#dev=tl', 1280, 1000, false);
+      await sleep(1400);
+      L.push('panel: ' + await c.eval("JSON.stringify({tabs: document.querySelectorAll('.ac-tab').length, items: document.querySelectorAll('.tl-item').length, locked: !!document.querySelector('.tl-locked')})"));
+      L.push('item text: ' + await c.eval("(document.querySelector('.tl-item')||{}).innerText.replace(/\\s+/g,' ')"));
+      await c.eval("document.querySelector('.tl-item').click(); 1");
+      await sleep(900);
+      L.push('reader: ' + await c.eval("JSON.stringify({head: (document.querySelector('.tl-hl b')||{}).textContent, idx: (document.querySelector('.tl-idx')||{}).textContent, paras: document.querySelectorAll('.tl-p').length, cues: document.querySelectorAll('.tl-cue').length, err: ((document.getElementById('errbox')||{}).textContent||'none').slice(0,300)})"));
+      await c.shot(path.join(ROOT, 'tools', 't_tl_reader.png'));
+      /* 跳到第六章（有对轰那一段） */
+      await c.eval("document.querySelector('#tl-toc').click(); 1");
+      await sleep(300);
+      L.push('toc rows: ' + await c.eval("document.querySelectorAll('.tl-toc-row').length"));
+      await c.eval("[...document.querySelectorAll('.tl-toc-row')].pop().click(); 1");
+      await sleep(900);
+      L.push('last chapter: ' + await c.eval("JSON.stringify({head: (document.querySelector('.tl-hl b')||{}).textContent, cues: document.querySelectorAll('.tl-cue').length, next: (document.querySelector('#tl-next')||{}).textContent})"));
+      /* 触发对轰 */
+      const cueOk = await c.eval("(() => { const b = [...document.querySelectorAll('.tl-cue')].find(x => /对轰/.test(x.innerText)); if (!b) return 'no-cue'; b.scrollIntoView({block:'center'}); b.click(); return 'clicked'; })()");
+      L.push('clash cue: ' + cueOk);
+      await sleep(1900);
+      L.push('clash layer: ' + await c.eval("JSON.stringify({layer: !!document.querySelector('.fx-clash'), halves: document.querySelectorAll('.fx-clash .chalf').length, hit: !!(document.querySelector('.fx-clash')||{}).classList && document.querySelector('.fx-clash').classList.contains('clashed')})"));
+      await c.shot(path.join(ROOT, 'tools', 't_tl_clash.png'));
+      await sleep(1600);
+      await c.eval("document.querySelector('.fx-clash') && document.querySelector('.fx-clash').click(); 1");
+      await sleep(600);
+      L.push('after clash: ' + await c.eval("JSON.stringify({layer: !!document.querySelector('.fx-clash'), played: document.querySelectorAll('.tl-cue.played').length})"));
+      /* 读完之后进度 */
+      await c.eval("document.querySelector('#tl-next').click(); 1");
+      await sleep(500);
+      L.push('archive: ' + await c.eval("JSON.stringify(JSON.parse(localStorage.getItem('grail_archive_v1')||'{}'))"));
+      /* 关掉重开：应当回上次那一章 */
+      await c.eval("document.querySelector('#ac-close').click(); 1");
+      await sleep(300);
+      await c.eval("document.querySelector('#btn-archive').click(); 1");
+      await sleep(300);
+      await c.eval("document.querySelector('.ac-tab[data-pane=\\\"tl\\\"]').click(); 1");
+      await sleep(300);
+      await c.eval("document.querySelector('.tl-item').click(); 1");
+      await sleep(600);
+      L.push('resume: ' + await c.eval("JSON.stringify({head: (document.querySelector('.tl-hl b')||{}).textContent, done: document.querySelectorAll('.tl-cue').length})"));
+      L.push('errbox: ' + await c.eval("((document.getElementById('errbox')||{}).textContent||'none').slice(0,200)"));
+      c.ws.close();
+
+      /* 未解锁那一档 */
+      const c2 = await openPage(BASE + '#dev=tllock', 1280, 1000, false);
+      await sleep(1200);
+      const lockTxt = await c2.eval("(document.querySelector('.tl-locked-line')||{}).textContent || 'NO-LOCK'");
+      L.push('locked line: ' + lockTxt);
+      await c2.shot(path.join(ROOT, 'tools', 't_tl_locked.png'));
+      c2.ws.close();
+      console.log(L.join('\n'));
+    } else if (mode === 'tlclash') {
+      const c = await openPage(BASE + '#dev=clash', 1280, 1000, false);
+      await sleep(500);
+      await c.shot(path.join(ROOT, 'tools', 't_clash_a.png'));
+      await sleep(1600);
+      await c.shot(path.join(ROOT, 'tools', 't_clash_b.png'));
+      await sleep(900);
+      await c.shot(path.join(ROOT, 'tools', 't_clash_c.png'));
+      console.log('clash shots ok');
+      c.ws.close();
     } else if (mode === 'b2') {
       const c = await openPage(BASE + '#dev=battle2', 1200, 1000, false);
       await sleep(1500);

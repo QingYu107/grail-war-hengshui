@@ -201,6 +201,39 @@
       el.innerHTML = '<div class="grid"></div><div class="scan"></div><div class="msg">' + (data.msg || '') + '</div>' +
         '<div class="hint" style="position:absolute;bottom:6vh;left:0;right:0;text-align:center;font-family:var(--hei);font-size:11px;letter-spacing:.3em;color:rgba(232,224,204,.4)">点击继续</div>';
       schedule(data.dur || 3200, done);
+    } else if (kind === 'clash') {
+      /* 宝具对轰：两块真名牌从左右压进来，撞在中间。
+         两边的曲子在这里只放一次（whoever 先起），所以这里不接管 BGM，
+         除非 data.bgm 明说要换——时间线阅读器就是这么用的。 */
+      try {
+        if (window.GrailAudio) {
+          window.GrailAudio.init && window.GrailAudio.init();
+          if (data.bgm) window.GrailAudio.play(data.bgm, { quick: true });
+        }
+      } catch (e) {}
+      el = ensureLayer('fx-clash');
+      var L = data.left || {}, R = data.right || {};
+      function half(side, o) {
+        return '<div class="chalf ' + side + '" style="--sig:' + (o.color || (side === 'l' ? '#b23a2e' : '#8a6a2a')) + '">' +
+          '<div class="ck">' + (o.k || '真名解放') + '</div>' +
+          '<div class="cc">' + (o.cls || '') + '</div>' +
+          '<div class="cn">' + (o.name || '') + '</div>' +
+          '<div class="cw">' + (o.who || '') + '</div>' +
+          '</div>';
+      }
+      el.innerHTML =
+        half('l', L) + half('r', R) +
+        '<div class="cseam"></div><div class="ccore"></div><div class="cwave"><i></i><i></i><i></i></div>' +
+        '<div class="cflash"></div>' +
+        '<div class="cverdict">' + (data.verdict || '') + '</div>' +
+        '<div class="hint">点击任意处继续</div>';
+      setTimeout(function () {
+        if (!el || !el.isConnected) return;
+        el.classList.add('clashed');
+        if (!fxLite()) el.classList.add('shake');
+        try { if (window.GrailSFX && window.GrailSFX.boom) window.GrailSFX.boom(); } catch (e) {}
+      }, data.hit || 1500);
+      schedule(data.dur || 4600, done);
     } else if (kind === 'noble') {
       /* 真名解放：曲子必须在卡出现的同一帧起，不能等演出结束再由调用方接上。 */
       try {

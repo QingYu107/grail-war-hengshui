@@ -12,6 +12,37 @@
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
   /* ---------- 相性分配 ---------- */
+  /* 每个从者在题库里的「可达上限」：把每题里该职阶能拿到的最高分加起来。
+     用它做分母，才能把职阶之间的先验拉平——题库本身的加权次数是人为的，
+     不该决定你更容易召到谁。 */
+  var SERVANT_CAP = null;
+  function servantCap() {
+    if (SERVANT_CAP) return SERVANT_CAP;
+    var cap = {};
+    (G.QUIZ || []).forEach(function (q) {
+      var top = {};
+      (q.options || []).forEach(function (o) {
+        Object.keys(o.servant || {}).forEach(function (k) {
+          top[k] = Math.max(top[k] || 0, o.servant[k]);
+        });
+      });
+      Object.keys(top).forEach(function (k) { cap[k] = (cap[k] || 0) + top[k]; });
+    });
+    SERVANT_CAP = cap;
+    return cap;
+  }
+  /* 答案指纹：同一个答案永远抽出同一个从者（不破坏「登记表决定你会召到谁」），
+     但不同答案在平手时会散开到不同的人。FNV-1a，够短够稳。 */
+  function answerHash(answers) {
+    var s = Object.keys(answers).sort().map(function (k) { return k + '' + answers[k]; }).join('|');
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++) {
+      h ^= s.charCodeAt(i);
+      h = (h * 16777619) >>> 0;
+    }
+    return h >>> 0;
+  }
+
   function score(answers) {
     var sv = {}, rt = {}, pe = {}, stat = {}, four = {};
     G.QUIZ.forEach(function (q) {
@@ -24,13 +55,24 @@
       Object.keys(opt.stat || {}).forEach(function (k) { stat[k] = (stat[k] || 0) + opt.stat[k]; });
       Object.keys(opt.four || {}).forEach(function (k) { four[k] = opt.four[k]; });
     });
-    // 从者：分数最高者；平手时按职介线微调
-    var order = ['saber', 'archer', 'lancer', 'rider', 'caster', 'assassin', 'berserker', 'foreigner'];
-    var best = null, bestScore = -1;
+    /* 从者：先按「可达上限」归一化，再比大小。
+       两个老问题：
+       ① order 里漏了 ruler —— 登记题给了它 8 次加权，但它永远抽不到；
+       ② 题库对不同职阶的加权次数本来就不一样（berserker/assassin 各 10 处、caster/saber 各 7 处），
+          直接比原始分会系统性偏向加得多的那几个（实测 berserker 22%、caster 4%）。
+       归一化之后每个从者的先验被拉平，真正决定结果的是你答案的倾向。
+       平手用答案哈希挑——同一个答案永远抽出同一个从者，但整体分布是均匀的。 */
+    var order = ['saber', 'archer', 'lancer', 'rider', 'caster', 'assassin', 'berserker', 'ruler', 'foreigner'];
+    var cap = servantCap();
+    var h = answerHash(answers || {});
+    var best = null, bestScore = -1, tie = [];
     order.forEach(function (id) {
-      var s = (sv[id] || 0) + 0.001 * order.indexOf(id);
-      if (s > bestScore) { bestScore = s; best = id; }
+      var raw = sv[id] || 0;
+      var s = cap[id] ? raw / cap[id] : 0;
+      if (s > bestScore + 1e-9) { bestScore = s; best = id; tie = [id]; }
+      else if (Math.abs(s - bestScore) <= 1e-9) { tie.push(id); }
     });
+    if (tie.length > 1) best = tie[h % tie.length];
     // 御主：按 persona 命中数挑预设卡；相性等级按关键词命中数
     var master = null, mBest = -1;
     G.MASTERS.forEach(function (m) {
