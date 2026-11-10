@@ -202,6 +202,13 @@
         '<div class="hint" style="position:absolute;bottom:6vh;left:0;right:0;text-align:center;font-family:var(--hei);font-size:11px;letter-spacing:.3em;color:rgba(232,224,204,.4)">点击继续</div>';
       schedule(data.dur || 3200, done);
     } else if (kind === 'noble') {
+      /* 真名解放：曲子必须在卡出现的同一帧起，不能等演出结束再由调用方接上。 */
+      try {
+        if (window.GrailAudio) {
+          window.GrailAudio.init && window.GrailAudio.init();
+          if (data.theme) window.GrailAudio.play(data.theme, { quick: true });
+        }
+      } catch (e) {}
       el = ensureLayer('fx-noble');
       el.style.setProperty('--sig', data.color || '#b23a2e');
       var ttl = data.title || '宝具';
@@ -220,7 +227,7 @@
         '<span class="solid">' + ttl + '</span></div>' +
         '<div class="s">' + (data.sub || '') + '</div></div>' +
         '<div class="hint">点击继续</div>';
-      schedule(data.dur || 2600, done);
+      schedule(data.dur || 3400, done);
     } else if (kind === 'beast') {
       el = ensureLayer('fx-beast');
       var title = data.title || '攀比';
@@ -249,6 +256,48 @@
         '<div class="line">显 现</div>' +
         '<div class="q">' + (data.sub || '你是第几？') + '</div></div>';
       schedule(data.dur || 5600, done);
+    } else if (kind === 'dissolve') {
+      /* 文字溶解：一段话逐字显形，然后整体往下沉、发虚。
+         用在「回顾」「结案」这种要把一段叙述按下去的地方。 */
+      el = ensureLayer('fx-dissolve');
+      var dlines = data.lines || [];
+      el.innerHTML = '<div class="grain"></div><div class="diss">' +
+        dlines.map(function (t, i) {
+          var chars = String(t).split('').map(function (c, k) {
+            return '<span style="animation-delay:' + (i * 260 + k * 26) + 'ms">' + (c === ' ' ? '&nbsp;' : c) + '</span>';
+          }).join('');
+          return '<p class="dl">' + chars + '</p>';
+        }).join('') + '</div><div class="hint">点击任意处继续</div>';
+      schedule(data.dur || (900 + dlines.length * 900), done);
+    } else if (kind === 'static') {
+      /* 雪花 + 扫描线 + 边缘渗色：认不出画面的时候用 */
+      el = ensureLayer('fx-static');
+      el.innerHTML =
+        '<svg width="0" height="0" aria-hidden="true"><defs>' +
+        '<filter id="noiseF"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7">' +
+        '<animate attributeName="seed" dur="0.9s" values="7;19;3;11" repeatCount="indefinite"/></feTurbulence>' +
+        '<feColorMatrix type="saturate" values="0"/></filter></defs></svg>' +
+        '<div class="noise"></div><div class="scan"></div><div class="bleed"></div>' +
+        '<div class="msg">' + (data.msg || '信 号 不 稳') + '</div>' +
+        '<div class="hint">点击任意处继续</div>';
+      schedule(data.dur || 1400, done);
+    } else if (kind === 'mirror') {
+      /* 镜像撕裂：同一句话左右两份，一份是反的，中间一条缝 */
+      el = ensureLayer('fx-mirror');
+      var mt = data.title || '你是第几？';
+      el.innerHTML =
+        '<div class="half l"><span>' + mt + '</span></div>' +
+        '<div class="half r"><span>' + mt + '</span></div>' +
+        '<div class="seam"></div>' +
+        '<div class="hint">点击任意处继续</div>';
+      schedule(data.dur || 2200, done);
+    } else if (kind === 'bleed') {
+      /* 渗色：红从四边往里渗，中间什么也没有 */
+      el = ensureLayer('fx-bleed');
+      el.innerHTML = '<div class="edge e1"></div><div class="edge e2"></div>' +
+        '<div class="edge e3"></div><div class="edge e4"></div>' +
+        '<div class="msg">' + (data.msg || '') + '</div><div class="hint">点击任意处继续</div>';
+      schedule(data.dur || 1800, done);
     } else {
       if (done) done();
     }
@@ -266,13 +315,18 @@
   }
 
   /* ---------- 故障闪：一次 0.3–0.9s 的画面撕裂，不挡操作 ---------- */
+  /* 设置里的「减弱」不关演出，只把抖动与时长压下来——晕动症的人真的受不了 */
+  function fxLite() {
+    try { return localStorage.getItem('grail_fx') === 'lite'; } catch (e) { return false; }
+  }
   var burstCount = 0;
   function glitchBurst(sceneKey, opts) {
     opts = opts || {};
     if (burstCount > 2) return;                     // 防止叠太多层
-    var dur = opts.dur || 520;
+    var lite = fxLite();
+    var dur = Math.round((opts.dur || 520) * (lite ? 0.55 : 1));
     var l = document.createElement('div');
-    l.className = 'fx-burst' + (opts.hard ? ' hard' : '');
+    l.className = 'fx-burst' + (opts.hard && !lite ? ' hard' : '');
     if (sceneKey) {
       l.style.backgroundImage = 'url("assets/img/glitch/' + sceneKey + '_glitch.jpg")';
       l.classList.add('with-img');
@@ -288,7 +342,7 @@
     burstCount++;
     setTimeout(function () { l.remove(); burstCount--; }, dur + 140);
     // 抖动页面正文，强化"信号不稳"
-    if (opts.shake !== false && document.body) {
+    if (opts.shake !== false && !lite && document.body) {
       document.body.classList.add('sig-shake');
       setTimeout(function () { document.body.classList.remove('sig-shake'); }, Math.min(460, dur));
     }

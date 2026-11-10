@@ -184,8 +184,17 @@
     if (f.doorOpen) return 'E7';
     if (f.attributed) return 'E6';
 
+    /* 「人味」这一栏：原本只看几个固定 flag。夜里那些事（复盘、巡夜、找从者）
+       和真的跟一个从者走到 LV.2，本质上是同一件事——你没有把七天全花在比较上。
+       不把这两样算进来，玩家在夜里做的七次选择对结局就是零影响。 */
+    var nightCount = 0;
+    (function () {
+      var n = st.nights || {};
+      Object.keys(n).forEach(function (d) { if (n[d] !== 'sleep') nightCount++; });
+    })();
     var human = f.savedRunner || f.stoodUp || f.refusedNumber || f.counterBackwards ||
-                f.stayed || f.gaveUp || f.threePaths || f.erasedMarks;
+                f.stayed || f.gaveUp || f.threePaths || f.erasedMarks ||
+                nightCount >= 4 || (st.bond || 0) >= 2;
 
     if (st.beast >= 7) {
       if (f.allPresent) return 'E8';
@@ -202,6 +211,32 @@
     if (f.allyChen && f.metLin) return 'E5';       // 有人可投奔
     if (st.san <= 20) return 'E9';                 // 撑到最后，但已经麻了
     return 'E4';                                   // 带着人味离开
+  }
+
+  /* 判定依据：给结局页一行人能读懂的话，玩家才知道自己是怎么走到这一步的 */
+  function reason(id, s) {
+    var f = s.s.flags || {}, st = s.s || {};
+    var map = {
+      E1: '你走到了那块屏下面，并且开了口。',
+      E2: '没有人活到最后，或者你一次都没有真正参与。',
+      E3: '曝光度满了十格，教务处先一步找上了你们。',
+      E4: '圣杯没能降临：断电、兽没吃到东西，或者你带着人味走了出来。',
+      E5: '你说过「我不参与排名」，而且身边还有人。',
+      E6: 'Ruler 替你认了这件事。',
+      E7: '门开了——那个账号的播放量，已经没有人能算出总数。',
+      E8: '七个人在同一时刻站在同一个地方。',
+      E9: '兽吃满了，或者你从头到尾都在跟着那张表走。',
+      E10: '你替全校许了愿，因为你是老师。',
+      E11: '那个杀手一次都没有动手。'
+    };
+    var why = map[id] || '';
+    var extra = [];
+    if (st.bond >= 3) extra.push('与从者的羁绊 LV.3');
+    var nights = st.nights || {}, nc = Object.keys(nights).length;
+    if (nc) extra.push('夜里做过 ' + nc + ' 次决定');
+    if (f.beastDown) extra.push('砸了那块屏');
+    if (f.allPresent) extra.push('七人全到场');
+    return why + (extra.length ? '（' + extra.join(' · ') + '）' : '');
   }
 
   /* 世界状态 1D10（后日谈生成器） */
@@ -221,4 +256,5 @@
   G.ENDINGS = ENDINGS;
   G.WORLD = WORLD;
   G.judgeEnding = judge;
+  G.judgeReason = reason;
 })();

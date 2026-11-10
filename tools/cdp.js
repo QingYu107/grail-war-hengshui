@@ -391,6 +391,206 @@ const FLOW = `
       if (hasAgain) { await c.eval("document.querySelector('#btn-again').click()"); await sleep(600); }
       console.log('after again: quiz ' + await c.eval("!!document.querySelector('#screen-quiz.is-active')") + ' | errbox ' + JSON.stringify(await c.eval("((document.getElementById('errbox')||{}).textContent||'none').slice(0,200)")));
       c.ws.close();
+    } else if (mode === 'reroll') {
+      /* 令咒重掷：失败 → 点重掷 → 必须还能继续 */
+      const c = await openPage(BASE + '#dev=reroll', 1200, 1000, false);
+      await sleep(1600);
+      const L = [];
+      L.push('cmp after click: ' + await c.eval("JSON.stringify({cmd: GRAIL.Engine.state().s.command, san: GRAIL.Engine.state().s.san, dice: (document.querySelector('.dice')||{}).textContent, acts: [...document.querySelectorAll('#beat-actions .btn')].map(b=>b.textContent.trim())})"));
+      const hasRe = await c.eval("!!document.querySelector('#beat-actions .btn--red')");
+      L.push('reroll btn: ' + hasRe);
+      if (hasRe) {
+        await c.eval("document.querySelector('#beat-actions .btn--red').click(); 1");
+        await sleep(900);
+        L.push('after reroll: ' + await c.eval("JSON.stringify({cmd: GRAIL.Engine.state().s.command, acts: [...document.querySelectorAll('#beat-actions .btn')].map(b=>b.textContent.trim()), err: ((document.getElementById('errbox')||{}).textContent||'none').slice(0,140)})"));
+        const cont = await c.eval("!!document.querySelector('#beat-actions .btn--solid')");
+        L.push('continue btn: ' + cont);
+        if (cont) {
+          await c.eval("[...document.querySelectorAll('#beat-actions .btn--solid')].pop().click(); 1");
+          await sleep(700);
+          L.push('after continue: ' + await c.eval("JSON.stringify({slot: GRAIL.Engine.state().s.slot, story: !!(document.querySelector('#opts .choice')||document.querySelector('#night-opts .choice')||document.querySelector('.map-card')), err: ((document.getElementById('errbox')||{}).textContent||'none').slice(0,140)})"));
+        }
+      }
+      await c.shot(path.join(ROOT, 'tools', 't_reroll.png'));
+      console.log(L.join('\n'));
+      c.ws.close();
+    } else if (mode === 'b2') {
+      const c = await openPage(BASE + '#dev=battle2', 1200, 1000, false);
+      await sleep(1500);
+      const L = [];
+      L.push('menu: ' + await c.eval("JSON.stringify([...document.querySelectorAll('.bmenu .btn')].map(b=>b.textContent.trim()))"));
+      L.push('intent: ' + await c.eval("((document.querySelector('.bintent')||{}).textContent||'none')"));
+      L.push('bond/stagger: ' + await c.eval("JSON.stringify({bond:(document.querySelector('.bbond')||{}).textContent||'', pips: document.querySelectorAll('.bstagger i.on').length})"));
+      await c.shot(path.join(ROOT, 'tools', 't_b2a.png'));
+      await c.eval("document.querySelector('.bmenu .btn[data-a=\"guard\"]').click(); 1");
+      await sleep(320);
+      L.push('fx nodes after guard: ' + await c.eval("document.querySelectorAll('.bfx').length"));
+      await c.shot(path.join(ROOT, 'tools', 't_b2b.png'));
+      await sleep(600);
+      await c.eval("document.querySelector('.bmenu .btn[data-a=\"observe\"]').click(); 1");
+      await sleep(320);
+      await c.shot(path.join(ROOT, 'tools', 't_b2c.png'));
+      L.push('after observe: ' + await c.eval("JSON.stringify({intent:(document.querySelector('.bintent')||{}).textContent||'', known: (document.querySelector('.bintent')||{}).className, pips: document.querySelectorAll('.bstagger i.on').length, turn:(document.querySelector('.btop span:last-child')||{}).textContent})"));
+      await sleep(700);
+      await c.eval("document.querySelector('.bmenu .btn[data-a=\"attack\"]').click(); 1");
+      await sleep(300);
+      await c.shot(path.join(ROOT, 'tools', 't_b2d.png'));
+      L.push('err: ' + await c.eval("((document.getElementById('errbox')||{}).textContent||'none').slice(0,200)"));
+      /* 宝具：曲子必须和演出卡同一刻起 */
+      const nobleOk = await c.eval(`(() => { const b=document.querySelector('.bmenu .btn[data-a="noble"]'); if(!b||b.disabled) return 'disabled'; b.click(); return 'clicked'; })()`);
+      await sleep(260);
+      L.push('noble click: ' + nobleOk + ' | theme now: ' + await c.eval("(window.GrailAudio&&GrailAudio.current())||'none'") +
+        ' | fx layer: ' + await c.eval("document.querySelectorAll('.fx-layer.fx-noble').length"));
+      await sleep(1200);
+      await c.shot(path.join(ROOT, 'tools', 't_b2e.png'));
+      L.push('after noble: theme ' + await c.eval("(window.GrailAudio&&GrailAudio.current())||'none'") + ' | layer ' + await c.eval("document.querySelectorAll('.fx-layer').length"));
+      console.log(L.join('\n'));
+      c.ws.close();
+    } else if (mode === 'ui2') {
+      /* 设置页 / 关系页 / 键盘 / 「契约 berserker 却打 berserker」 */
+      const c = await openPage(BASE + '#dev=game', 1200, 1000, false);
+      await sleep(1100);
+      const L = [];
+      // 设置页
+      await c.eval("document.querySelector('#btn-settings').click(); 1");
+      await sleep(400);
+      L.push('settings open: ' + await c.eval("!!document.querySelector('#set-layer')"));
+      L.push('settings rows: ' + await c.eval("document.querySelectorAll('#set-layer .set-row').length"));
+      await c.shot(path.join(ROOT, 'tools', 't_settings.png'));
+      await c.eval("document.querySelector('#set-mute').click(); 1");
+      await sleep(200);
+      L.push('mute -> audio ' + await c.eval("GrailAudio.isMuted()") + ' / sfx ' + await c.eval("GrailSFX.isMuted()"));
+      await c.eval("document.querySelector('#set-speed [data-speed=\"3\"]').click(); 1");
+      await sleep(150);
+      L.push('speed -> ' + await c.eval("localStorage.getItem('grail_speed')"));
+      await c.eval("document.querySelector('#set-fx [data-fx=\"lite\"]').click(); 1");
+      await sleep(150);
+      L.push('fx -> ' + await c.eval("localStorage.getItem('grail_fx')"));
+      await c.eval("document.querySelector('#set-close').click(); 1");
+      await sleep(300);
+      // 关系页
+      await c.eval("document.querySelector('[data-tab=\"relation\"]').click(); 1");
+      await sleep(350);
+      L.push('relation cards: ' + await c.eval("document.querySelectorAll('.rel-card').length") +
+        ' / me ' + await c.eval("document.querySelectorAll('.rel-card.me').length"));
+      await c.shot(path.join(ROOT, 'tools', 't_relation.png'));
+      // 键盘：1 选题，Enter 继续
+      await c.eval("document.querySelector('#beat-actions .btn--solid') && document.querySelector('#beat-actions .btn--solid').click(); 1");
+      await sleep(300);
+      const before = await c.eval("GRAIL.Engine.state().s.slot");
+      await c.eval(`(() => { const ev = new KeyboardEvent('keydown', {key:'1', bubbles:true}); document.body.dispatchEvent(ev); return 1; })()`);
+      await sleep(400);
+      L.push('key 1 -> beat? ' + await c.eval("!!document.querySelector('.dice') || !!document.querySelector('#beat-actions .btn--solid')"));
+      await c.eval(`(() => { const ev = new KeyboardEvent('keydown', {key:'Enter', bubbles:true}); document.body.dispatchEvent(ev); return 1; })()`);
+      await sleep(500);
+      L.push('after enter slot: ' + before + ' -> ' + await c.eval("GRAIL.Engine.state().s.slot"));
+      // 契约 berserker 时不能打 berserker
+      const foeName = await c.eval(`(() => {
+        GRAIL.Engine.state().servantId = 'berserker';
+        GRAIL_DEBUG.startBattle({ battle: { foe: 'berserker', title: '测试', clueLv: 3 }, label: 'x' });
+        return 'kicked';
+      })()`);
+      await sleep(1400);
+      L.push('battle kick: ' + foeName + ' / foe name: ' + await c.eval("(document.querySelector('.bname')||{}).textContent||''"));
+      L.push('err: ' + await c.eval("((document.getElementById('errbox')||{}).textContent||'none').slice(0,200)"));
+      console.log(L.join('\n'));
+      c.ws.close();
+    } else if (mode === 'night2') {
+      /* 刺客线：同一晚两次夜行行动，第二次不能被第一次的 flag 短路 */
+      const c = await openPage(BASE + '#dev=night', 1200, 1000, false);
+      await sleep(1300);
+      const L = [];
+      L.push('night#1: ' + await c.eval("JSON.stringify({opts: document.querySelectorAll('#night-opts .choice').length, extra: !!document.querySelector('.night-extra'), route: GRAIL.Engine.state().routeId})"));
+      await c.eval("document.querySelectorAll('#night-opts .choice')[0].click(); 1");
+      await sleep(700);
+      await c.eval("var b=document.querySelector('#beat-actions .btn--solid'); if(b) b.click(); 1");
+      await sleep(900);
+      L.push('night#2 shown: ' + await c.eval("!!document.querySelector('#night-opts')") +
+        ' / extra ' + await c.eval("!!document.querySelector('.night-extra')"));
+      await c.eval("document.querySelectorAll('#night-opts .choice')[0].click(); 1");
+      await sleep(700);
+      await c.eval("var b=document.querySelector('#beat-actions .btn--solid'); if(b) b.click(); 1");
+      await sleep(900);
+      L.push('after 2 nights: ' + await c.eval("JSON.stringify({day: GRAIL.Engine.state().s.day, slot: GRAIL.Engine.state().s.slot, night1: !!(GRAIL.Engine.state().s.flags['night_2']), night2: !!(GRAIL.Engine.state().s.flags['night2_2']), story: !!document.querySelector('#opts .choice') || !!document.querySelector('.map-card')})"));
+      L.push('err: ' + await c.eval("((document.getElementById('errbox')||{}).textContent||'none').slice(0,200)"));
+      console.log(L.join('\n'));
+      c.ws.close();
+    } else if (mode === 'play') {
+      /* 长按自动通关：每一屏都点，直到结局。夜里、战斗、地图、重掷都要能过。 */
+      const c = await openPage(BASE, 1200, 1000, false);
+      await c.eval("localStorage.clear(); 1");
+      await c.send('Page.reload');
+      await sleep(800);
+      await c.eval("document.querySelector('#btn-start').click()");
+      await sleep(350);
+      if (!await c.eval("!!document.querySelector('#screen-quiz.is-active')")) { await c.eval("document.querySelector('#btn-start').click()"); await sleep(350); }
+      for (let i = 0; i < 12; i++) {
+        if (!await c.eval("!!document.querySelector('#screen-quiz.is-active')")) break;
+        await c.eval("document.querySelector('#quiz-root .choice').click()"); await sleep(110);
+      }
+      await sleep(250);
+      await c.eval("var s=document.querySelector('#btn-sign'); if(s) s.click(); 1");
+      await sleep(500);
+      const seen = {};
+      for (let k = 0; k < 200; k++) {
+        const step = await c.eval(`(() => {
+          const q = s => document.querySelector(s);
+          if (q('#screen-ending.is-active')) return 'ENDING';
+          const roll = q('#roll-done'); if (roll) { roll.click(); return 'rollcall'; }
+          const inter = q('#inter-done'); if (inter) { inter.click(); return 'interlude'; }
+          const recall = q('#recall-done'); if (recall) { recall.click(); return 'recall'; }
+          const fight = q('.bmenu .btn:not([disabled])');
+          if (fight) { const n = q('.bmenu .btn[data-a="noble"]'); (n && !n.disabled ? n : fight).click(); return 'battle'; }
+          const bdone = q('#bt-done'); if (bdone) { bdone.click(); return 'battle-done'; }
+          const night = q('#night-opts .choice:not([disabled])'); if (night) { night.click(); return 'night'; }
+          const examDone = q('#exam-done'); if (examDone) { examDone.click(); return 'exam-done'; }
+          const mapBack = q('#map-back'); if (mapBack) { mapBack.click(); return 'map-back'; }
+          const mapDone = q('#map-done'); if (mapDone) { mapDone.click(); return 'map-done'; }
+          const mapCard = q('.map-card'); if (mapCard) { mapCard.click(); return 'map-card'; }
+          const wish = q('#wish-list .choice'); if (wish) { wish.click(); return 'wish'; }
+          const opts = q('#opts .choice:not([disabled])'); if (opts) { opts.click(); return 'opt'; }
+          const next = q('#beat-actions .btn--solid'); if (next) { next.click(); return 'next'; }
+          return 'STUCK';
+        })()`);
+        seen[step] = (seen[step] || 0) + 1;
+        if (step === 'STUCK' || step === 'ENDING') break;
+        await sleep(360);
+      }
+      const info = await c.eval(`JSON.stringify((() => {
+        const st = GRAIL.Engine.state();
+        const e = document.getElementById('errbox');
+        return { day: st ? st.s.day : null, slot: st ? st.s.slot : null,
+          san: st ? st.s.san : null, bond: st ? st.s.bond : null, cmd: st ? st.s.command : null,
+          beast: st ? st.s.beast : null, exp: st ? st.s.exposure : null,
+          ending: !!document.querySelector('#screen-ending.is-active'),
+          endingName: ((document.querySelector('.ending-name')||{}).textContent||''),
+          logTail: (st && st.log ? st.log.slice(-8) : []),
+          err: e ? e.textContent.replace(/\\s+/g, ' ').slice(0, 300) : 'none' };
+      })())`);
+      console.log('steps: ' + JSON.stringify(seen));
+      console.log('state: ' + info);
+      /* 结局 → 封面 → 档案馆：确认成就 / 羁绊记录落盘、面板不报错 */
+      await c.eval("var b=document.querySelector('#btn-backtitle'); if(b) b.click(); 1");
+      await sleep(500);
+      await c.eval("var a=document.querySelector('#btn-archive'); if(a) a.click(); 1");
+      await sleep(500);
+      console.log('archive: ' + await c.eval(`JSON.stringify({
+        open: !!document.querySelector('#archive-layer'),
+        stat: ((document.querySelector('.ac-stat')||{}).textContent||''),
+        ach: document.querySelectorAll('.ac-ach').length,
+        achOn: document.querySelectorAll('.ac-ach.on').length,
+        err: ((document.getElementById('errbox')||{}).textContent||'none').slice(0,200)
+      })`));
+      await c.shot(path.join(ROOT, 'tools', 'shot_archive.png'));
+      console.log('screen: ' + await c.eval(`JSON.stringify({
+        gameActive: !!document.querySelector('#screen-game.is-active'),
+        endingActive: !!document.querySelector('#screen-ending.is-active'),
+        storyHead: ((document.querySelector('#story-root .scene-head h2')||{}).textContent||''),
+        choices: [...document.querySelectorAll('#story-root button')].slice(0,8).map(b=>b.textContent.trim().slice(0,26)),
+        html: (document.querySelector('#story-root')||{}).innerHTML ? document.querySelector('#story-root').innerHTML.length : 0
+      })`));
+      await c.shot(path.join(ROOT, 'tools', 'shot_play.png'));
+      c.ws.close();
     } else if (mode === 'ending') {
       const c = await openPage(BASE + '#dev=ending', 1200, 1100, false);
       await sleep(4000);
@@ -555,3 +755,4 @@ const FLOW = `
     try { proc.kill(); } catch (e) { }
   }
 })();
+

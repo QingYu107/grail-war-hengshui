@@ -13,6 +13,7 @@ require('../js/data/story_prologue.js');
 require('../js/data/story_a.js');
 require('../js/data/story_b.js');
 require('../js/data/endings.js');
+require('../js/data/night.js');
 require('../js/engine.js');
 
 var G = window.GRAIL;
@@ -45,18 +46,42 @@ function checkStory() {
   });
 }
 
+/* 夜行：和 ui 走同一份数据（js/data/night.js），在 node 里也能跑一遍。
+   以前新增的夜间流程只有 cdp 在测，node 侧的回归等于漏掉一半。 */
+function runNight(st, day, pick) {
+  var N = GRAIL_NIGHT || { actions: [] };
+  var a = (N.actions || []).filter(function (x) { return x.k === pick; })[0] || (N.actions || [])[0];
+  if (!a) return;
+  st.s.flags['night_' + day] = true;
+  st.s.nights = st.s.nights || {};
+  st.s.nights[day] = a.k;
+  if (a.fx) E.apply(a.fx);
+  if (a.cut) st.s.beastCutDay = day;
+  if (a.k === 'bond') E.apply({ bond: 1 });
+}
+
 function playthrough(picks, mode) {
   var answers = {};
   G.QUIZ.forEach(function (q, i) { answers[q.id] = picks[i % picks.length]; });
   var res = E.score(answers);
   var st = E.create(answers);
   var guard = 0;
-  while (st.s.day <= 7 && guard++ < 60) {
+  while (st.s.day <= 7 && guard++ < 80) {
     var D = G.STORY[st.s.day];
     if (!D) { problems.push('missing day ' + st.s.day); break; }
     var slot = D.slots[st.s.slot];
     if (!slot) {
       var p = st.s.day;
+      // 夜里那一段：Day 1–6 各一次，刺客线两次
+      if (p >= 1 && p < 7 && !st.s.flags['night_' + p]) {
+        runNight(st, p, mode === 'careful' ? 'sleep' : ['rest', 'patrol', 'bond'][p % 3]);
+        continue;
+      }
+      if (p >= 1 && p < 7 && st.routeId === 'assassin' && !st.s.flags['night2_' + p]) {
+        st.s.flags['night2_' + p] = true;
+        runNight(st, p, 'rest');
+        continue;
+      }
       st.s.day++; st.s.slot = 0;
       if (st.s.beastCutDay !== p) st.s.beast = Math.min(7, st.s.beast + 1);
       continue;
@@ -170,7 +195,11 @@ var cases = [
   ['E8', mk({ s: { beast: 3 }, flags: { allPresent: true } })],
   ['E1', mk({ s: { beast: 2 }, flags: { wishWin: true } })],
   ['E10', mk({ s: { beast: 2 }, flags: { wishWin: true, wishAll: true }, masterId: 'zoulijun' })],
-  ['E11', mk({ s: { beast: 2 }, flags: { wishWin: true, assassinAlive: true }, servantId: 'assassin' })]
+  ['E11', mk({ s: { beast: 2 }, flags: { wishWin: true, assassinAlive: true }, servantId: 'assassin' })],
+  // 夜行与羁绊参与判定：只靠夜里做的事，也该被算成「人味」
+  ['E4', mk({ s: { beast: 7, nights: { 1: 'rest', 2: 'patrol', 3: 'bond', 4: 'rest' } }, flags: { summoned: true } })],
+  ['E9', mk({ s: { beast: 7, nights: { 1: 'sleep' } }, flags: { summoned: true } })],
+  ['E4', mk({ s: { beast: 6, bond: 2 }, flags: { summoned: true } })]
 ];
 cases.forEach(function (c) {
   var got = G.judgeEnding(c[1]);

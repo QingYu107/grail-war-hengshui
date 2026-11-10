@@ -447,10 +447,10 @@
       layer.next += layer.def.step;
     }
   }
-  function layerFadeIn(layer) {
-    var t = ctx.currentTime, g = layer.bus.gain;
+  function layerFadeIn(layer, ms) {
+    var t = ctx.currentTime, g = layer.bus.gain, dur = (ms == null ? XFADE : ms / 1000);
     g.cancelScheduledValues(t); g.setValueAtTime(Math.max(g.value, 0.0001), t);
-    g.exponentialRampToValueAtTime(1, t + XFADE);
+    g.exponentialRampToValueAtTime(1, t + dur);
   }
   function killLayer(layer, immediate) {
     if (layer.dead) return;
@@ -620,7 +620,10 @@
     if (want) play(want); else emit();
     return true;
   }
-  function play(themeId) {
+  /* opts.quick：宝具 / 关键演出用。0.8s 的渐入放在 2.6s 的演出卡里，
+     耳朵上就是「画面都过半了才有声」。这里压到 0.14s，让曲子和画面同时砸下来。 */
+  function play(themeId, opts) {
+    var quick = !!(opts && opts.quick);
     if (!themeId || !THEMES[themeId]) return false;
     if (SERVANT_IDS.indexOf(themeId) >= 0) state.lastServant = themeId;
     if (!ctx) {                                   // 手势前调用：先记下，init 后播放
@@ -631,13 +634,13 @@
     }
     if (ctx.state === 'suspended') ctx.resume().then(null, function () { /* 忽略 */ });
     if (state.theme === themeId && layers.length) return true;
-    for (var i = layers.length - 1; i >= 0; i--) killLayer(layers[i], false);   // 旧层淡出
+    for (var i = layers.length - 1; i >= 0; i--) killLayer(layers[i], quick);   // 旧层淡出
     layers = [];
     state.theme = themeId;
     var layer = createLayer(themeId);
     if (!layer) return false;
     layers.push(layer);
-    layerFadeIn(layer);
+    layerFadeIn(layer, quick ? 140 : null);
     // 命中真实音频则覆盖程序化主角，程序化层退成极轻的空间感
     probeFile(themeId, function (url) {
       if (!url || layer.dead || state.theme !== themeId) return;

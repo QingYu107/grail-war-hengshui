@@ -1,0 +1,82 @@
+/* ============================================================================
+ * 界面层 · ui.css
+ * 设置页、关系档案、档案夹标签换行，以及一些共用的小控件。
+ * 与 battle.css 分开：那边是战斗演出，这边是「面板」。
+ * ==========================================================================*/
+
+/* ---------- 档案夹标签：现在有八个，排成 4 + 4 ---------- */
+.tabs { flex-wrap: wrap; }
+.tabs button { flex: 1 1 22%; min-width: 44px; }
+.tab-panel .rel-grid { margin-bottom: 4px; }
+
+/* ---------- 关系档案 ---------- */
+.rel-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.rel-card {
+  padding: 9px 10px; border: 1px solid var(--line);
+  background: rgba(255,255,255,.28); position: relative;
+}
+.rel-card b { display: block; font-size: 14px; letter-spacing: .04em; color: var(--ink); }
+.rel-card .rel-st {
+  display: inline-block; margin-top: 4px; font-family: var(--hei);
+  font-size: 10px; letter-spacing: .12em; color: var(--ink-3);
+  border-bottom: 1px solid var(--line);
+}
+.rel-card i {
+  display: block; margin-top: 5px; font-style: normal;
+  font-family: var(--mono); font-size: 9.5px; letter-spacing: .06em; color: var(--ink-3);
+}
+.rel-card.me { border-left: 3px solid var(--red); background: rgba(140,43,34,.05); }
+.rel-card.gone { opacity: .5; }
+.rel-card.gone b { text-decoration: line-through; }
+.rel-card.beat { border-left: 3px solid #b23a2e; }
+.rel-card.ally { border-left: 3px solid var(--green); }
+.rel-card.met { border-left: 3px solid var(--blue); }
+
+@media (max-width: 420px) { .rel-grid { grid-template-columns: 1fr; } }
+
+/* ---------- 设置页 ---------- */
+.set-modal { max-width: 640px; }
+.set-sec { padding: 4px 0 10px; border-bottom: 1px dashed var(--line); }
+.set-sec:last-of-type { border-bottom: 0; }
+.set-sec h5 { margin: 12px 0 8px; font-family: var(--hei); font-size: 10.5px; letter-spacing: .22em; color: var(--red); }
+.set-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 7px 0; font-size: 13px; color: var(--ink-2);
+}
+.set-row > span { flex: 1; min-width: 0; }
+.set-row input[type=range] { width: 150px; accent-color: #b23a2e; }
+.set-row b { font-family: var(--mono); font-size: 11px; color: var(--ink-3); width: 28px; text-align: right; }
+.set-tip { margin: 2px 0 6px; font-size: 11px; line-height: 1.7; color: var(--ink-3); }
+
+.set-slot {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 12px;
+}
+.set-slot .sn { font-family: var(--hei); letter-spacing: .1em; color: var(--ink-3); white-space: nowrap; }
+.set-slot .st { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink-2); }
+
+.mini {
+  appearance: none; border: 1px solid var(--line); background: rgba(255,255,255,.4);
+  font-family: var(--hei); font-size: 10.5px; letter-spacing: .1em; color: var(--ink-2);
+  padding: 5px 10px; cursor: pointer; white-space: nowrap;
+}
+.mini:hover { border-color: var(--ink); color: var(--ink); }
+.mini.on { background: var(--ink); color: #f4ecda; border-color: var(--ink); }
+.mini.danger { color: #8c2b22; border-color: rgba(140,43,34,.4); }
+.mini[disabled] { opacity: .35; cursor: default; }
+
+.switch {
+  appearance: none; border: 1px solid var(--line); background: rgba(255,255,255,.4);
+  min-width: 52px; padding: 5px 10px; cursor: pointer;
+  font-family: var(--hei); font-size: 11px; letter-spacing: .12em; color: var(--ink-3);
+}
+.switch.on { background: #2f6b3a; border-color: #2f6b3a; color: #f4ecda; }
+
+.seg { display: flex; gap: 6px; flex-wrap: wrap; }
+
+@media (max-width: 560px) {
+  .set-row { flex-wrap: wrap; gap: 6px 10px; }
+  .set-row input[type=range] { width: 100%; }
+  .set-slot { flex-wrap: wrap; }
+  .set-slot .st { white-space: normal; }
+}

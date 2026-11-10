@@ -153,9 +153,11 @@
         options: [
           {
             id: 'd1c0', label: '楼下有人把你叫住了。', sub: '遭遇 · 教学战',
-            battle: { foe: 'berserker', title: '宿舍楼下 · 初次遭遇', clueLv: 2, scale: 0.5 },
+            /* 原来这里写死了 berserker：契约到 berserker 的玩家，第二天就会在楼下遇见自己，
+               立绘、名字、宝具全是同一个人。改成 auto，由 randomFoeId 挑，它本来就会剔掉你自己。 */
+            battle: { foe: 'auto', title: '宿舍楼下 · 初次遭遇', clueLv: 2, scale: 0.5 },
             text: ['你走到楼梯口，那个人还站在那里。'],
-            fx: { san: -1, flag: 'metBerserkerEarly', log: '有人在宿舍楼下等了你一整晚。' }
+            fx: { san: -1, flag: 'metFoeEarly', log: '有人在宿舍楼下等了你一整晚。' }
           },
           {
             id: 'd1c1', label: '上天台。', sub: '男生宿舍 · 铁链锁',

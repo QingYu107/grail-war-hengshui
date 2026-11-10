@@ -5,6 +5,7 @@
   var SAVE_KEY = 'grail_hengshui_save_v1';
   var SLOTS = [1, 2, 3];
   function slotKey(n) { return SAVE_KEY + '_s' + (n || 1); }
+  function autoKey() { return SAVE_KEY + '_auto'; }
 
   function d(n) { return Math.floor(Math.random() * n) + 1; }
   function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
@@ -98,7 +99,8 @@
       sanMax: sanMax,
       mp: Math.floor(st.pow / 5), mpMax: Math.floor(st.pow / 5),
       luck: d(6) * 5, exposure: 1, demerit: 2, command: 3, beast: 0,
-      clues: {}, flags: {}, allies: 0, kills: 0, alive: 7, ap: 6, day: 0, slot: 0,
+      clues: {}, flags: {}, allies: 0, kills: 0, alive: 7, day: 0, slot: 0,
+      bond: 0, nights: {}, bondSeen: {},      // 羁绊等级 / 夜间行动记录 / 已看过的羁绊片段
       affinityLevel: res.affinity.level
     };
     // 职介线加成
@@ -123,6 +125,30 @@
       affinity: res.affinity, four: res.four, s: s,
       log: [], history: [], pending: null, ended: null
     };
+  }
+
+  /* ---------- SAN 分档 ----------
+     SAN 是这游戏唯一的血条，但原来只在一个地方扣 5 点、画面只变个色调，
+     玩家根本感觉不到自己在掉下去。这里把它做成一个真正会影响玩法的东西：
+     分五档，检定、战斗命中、伤害、幻觉选项、画面扭曲都按档位走。 */
+  var SAN_FX = [
+    { key: 'steady', name: '稳', pen: 0, dmg: 0, foeDmg: 0, halo: 0 },
+    { key: 'tense', name: '发紧', pen: 5, dmg: 0, foeDmg: 0, halo: 1 },
+    { key: 'drift', name: '发飘', pen: 12, dmg: 1, foeDmg: 1, halo: 2 },
+    { key: 'slip', name: '错位', pen: 22, dmg: 2, foeDmg: 2, halo: 3 },
+    { key: 'broken', name: '崩坏', pen: 35, dmg: 4, foeDmg: 4, halo: 4 }
+  ];
+  function sanTier(san, max) {
+    var p = max && max > 0 ? san / max : 0.6;
+    if (san <= 8) return 4;
+    if (p <= 0.18) return 3;
+    if (p <= 0.35) return 2;
+    if (p <= 0.55) return 1;
+    return 0;
+  }
+  function currentSanTier() {
+    if (!S) return 0;
+    return sanTier(S.s.san, S.s.sanMax);
   }
 
   /* ---------- 检定 ---------- */
@@ -161,6 +187,11 @@
     if (S.routeId === 'rule' && (name === '说服' || name === '话术')) v += 10;
     if (S.s.san <= 20) v -= 5;
     if (S.s.exposure >= 5) v -= 5;
+    /* SAN：按档位扣，不再是一刀切的 −5 */
+    v -= SAN_FX[currentSanTier()].pen;
+    /* 羁绊：等级越高，从者越会在关键检定上拉你一把（只加意志/闪避/战斗这类「有人在背后」的技能） */
+    var bl = S.s.bond || 0;
+    if (bl && (name === '意志' || name === '闪避' || name === '战斗' || name === '格斗')) v += bl * 4;
     return clamp(Math.round(v), 1, 99);
   }
 
@@ -200,23 +231,35 @@
     if (fx.clue) {
       var cid = typeof fx.clue === 'string' ? fx.clue : Object.keys(fx.clue)[0];
       var lv = typeof fx.clue === 'string' ? 3 : fx.clue[cid];
-      s.clues[cid] = Math.max(s.clues[cid] || 0, lv);
-      notes.push('情报：' + (G.servant(cid) ? G.servant(cid).cls : cid) + ' ' + roman(s.clues[cid]));
+      /* 给自己的从者涨情报没有意义：地图与支线事件原来不区分「目标的从者是不是你自己」，
+         于是会出现「目击了自己」这种荒唐记录。这里改成折算成一点相性回报。 */
+      if (cid === S.servantId) {
+        s.san = clamp(s.san + 1, 0, s.sanMax);
+        notes.push('这条线指向你自己（SAN +1）');
+      } else {
+        s.clues[cid] = Math.max(s.clues[cid] || 0, lv);
+        notes.push('情报：' + (G.servant(cid) ? G.servant(cid).cls : '某位从者') + ' ' + roman(s.clues[cid]));
+      }
     }
     if (fx.clueAll) {
       var ids = ['saber', 'archer', 'lancer', 'rider', 'caster', 'assassin', 'berserker'];
       ids.forEach(function (id) { if (!s.clues[id]) s.clues[id] = 1; });
       notes.push('情报卡更新');
     }
+    /* 羁绊：不再是纯文本奖励。等级会进战斗（伤害 / 减伤 / 判定 / 替身），也会进结局。 */
+    if (fx.bond) {
+      var before2 = s.bond || 0;
+      s.bond = clamp(before2 + fx.bond, 0, 3);
+      if (s.bond !== before2) notes.push('羁绊 LV.' + s.bond);
+    }
     if (fx.flag) {
       var fname = typeof fx.flag === 'string' ? fx.flag : Object.keys(fx.flag)[0];
       var fval = typeof fx.flag === 'string' ? true : fx.flag[fname];
-      s.flags[fname] = fval; notes.push('记录：' + flagLabel(fname));
+      s.flags[fname] = fval; notes.push('记录：' + flagNote(fname));
     }
     if (fx.allies) { s.allies = clamp(s.allies + fx.allies, 0, 7); notes.push('盟友 ' + (fx.allies > 0 ? '+' : '') + fx.allies); }
     if (fx.kills) { s.kills += fx.kills; notes.push('你动手了'); }
     if (fx.alive) { s.alive = clamp(s.alive + fx.alive, 0, 7); notes.push('在场御主 ' + s.alive + ' / 7'); }
-    if (fx.awake) { s.ap += fx.awake; }
     if (s.demerit >= 10 && !s.flags.parentMeetingNow) {
       s.flags.parentMeetingNow = true; s.demerit = 0; s.exposure = clamp(s.exposure + 2, 0, 10);
       notes.push('家长会：当日魔术中断，曝光 +2');
@@ -231,28 +274,49 @@
   function labelOf(k) {
     return { san: 'SAN', exposure: '曝光度', demerit: '扣分', beast: '兽进度', mp: 'MP', hp: 'HP', luck: '幸运' }[k] || k;
   }
+  /* 事件影响的中文名：查 js/data/flags.js 的词库。
+     查不到时返回 null —— 调用方不要退回去显示英文键（以前档案夹里会冒出 fixjiahao 这种东西）。 */
   function flagLabel(f) {
-    var m = {
-      firstBlood: '第一滴血', sawVideo: '看过 Day 0 的视频', metRuler: '与 Ruler 谈过',
-      rulerDeal: '欠 Ruler 一个人情', beastNamed: '知道「兽」这个词', doorOpen: '门开了',
-      attributed: 'Ruler 归因', blackout: '圣杯断电', accel: '学习加速', honorThird: '第三名的位置',
-      allyChen: '陈墨的合作', allyBai: '白露的交换', allyWang: '王秀英的坏账',
-      know1994: '1994 年的回声', examClue: '月考杂音里的中文', leftSchool: '月假出校',
-      wishWin: '许愿：赢', wishAll: '许愿：全校上线', wishSleep: '许愿：睡个好觉',
-      allPresent: '七人全到场', doorClosed: '断掉了一眼', accountDead: '账号停更',
-      parentMeetingNow: '家长会', misfit: '错位召唤', perfectAffinity: '完美相性'
-    };
-    return m[f] || f;
+    if (!f) return null;
+    var T = window.GRAIL_FLAGS || {};
+    if (T[f]) return T[f];
+    if (f.indexOf('gone_') === 0) return '点名：' + f.slice(5) + ' 没有答到';
+    var bm = /^bond(saber|archer|lancer|rider|caster|assassin|berserker|ruler|foreigner)([123])$/.exec(f);
+    if (bm) return '与 ' + bm[1].toUpperCase() + ' 的第 ' + ['一', '二', '三'][+bm[2] - 1] + ' 段';
+    return null;
+  }
+  /* 写进「记录：xxx」时用这个：没对上名字的，给一句中性的话，不吐英文。 */
+  function flagNote(f) {
+    var l = flagLabel(f);
+    if (l) return l;
+    if (/^bonddone_/.test(f)) return '你和他把话说完了一段';
+    if (/^night_/.test(f)) return '这一夜过去了';
+    if (/^free_/.test(f)) return '今天的一次行动用掉了';
+    if (/^fx_/.test(f)) return '看过一段不该看的画面';
+    return '档案上又多了一笔';
   }
   function roman(n) { return ['', 'Ⅰ', 'Ⅱ', 'Ⅲ', 'Ⅳ', 'Ⅴ'][n] || ('Ⅴ'); }
 
-  /* ---------- 存档 ---------- */
+  /* ---------- 存档 ----------
+     两套：手动槽（1/2/3，只有玩家点「存档」才写）与自动档（_auto）。
+     以前无参 save() 会把槽号写回 slotUsed，自动存档一路把手动档顶掉，
+     读「继续」时拿到的是最近一次自动存档，看起来像手动档被覆盖。 */
+  function autosave() {
+    try {
+      if (!S) return false;
+      S.t = Date.now();
+      localStorage.setItem(autoKey(), JSON.stringify(S));
+      localStorage.setItem(SAVE_KEY, JSON.stringify(S));
+      return true;
+    } catch (e) { return false; }
+  }
   function save(slot) {
+    if (!slot) return autosave();
     try {
       if (S) {
         S.t = Date.now();
-        S.slotUsed = slot || S.slotUsed || 1;
-        localStorage.setItem(slotKey(S.slotUsed), JSON.stringify(S));
+        S.slotUsed = slot;
+        localStorage.setItem(slotKey(slot), JSON.stringify(S));
         localStorage.setItem(SAVE_KEY, JSON.stringify(S));
       }
       return true;
@@ -260,12 +324,33 @@
   }
   function load(slot) {
     try {
-      var raw = localStorage.getItem(slotKey(slot || 1)) || (slot ? null : localStorage.getItem(SAVE_KEY));
+      var raw = slot ? localStorage.getItem(slotKey(slot))
+        : (localStorage.getItem(autoKey()) || localStorage.getItem(SAVE_KEY));
       if (!raw) return false;
       var o = JSON.parse(raw);
       if (!o || !o.servantId) return false;
-      S = o; return true;
+      S = migrate(o); return true;
     } catch (e) { return false; }
+  }
+  /* 旧档补字段：新增的状态（羁绊、夜间行动）在旧存档里没有，
+     不补齐会在第一次读到时抛 TypeError。 */
+  function migrate(o) {
+    if (!o.s) return o;
+    var s = o.s;
+    if (typeof s.bond !== 'number') s.bond = 0;
+    if (!s.nights) s.nights = {};
+    if (!s.bondSeen) s.bondSeen = {};
+    if (typeof s.slotUsed === 'undefined') s.slotUsed = 1;
+    /* 旧档里 bond 是数字，但没有「看过哪几段」的记录：
+       按等级把前面几段补成已读，否则夜里会把第一段再演一次。 */
+    var book = (window.GRAIL_BONDS || {})[o.servantId];
+    if (book && book.nodes) {
+      var list = Object.keys(book.nodes).map(function (k) { return book.nodes[k]; });
+      for (var i = 0; i < Math.min(s.bond, list.length); i++) {
+        if (list[i] && list[i].id) s.bondSeen[list[i].id] = true;
+      }
+    }
+    return o;
   }
   function listSaves() {
     var out = [];
@@ -275,14 +360,19 @@
         if (!raw) { out.push({ slot: n, empty: true }); return; }
         var o = JSON.parse(raw);
         out.push({ slot: n, empty: false, t: o.t || 0, day: o.s ? o.s.day : 0,
-          servant: o.servantId || '', master: o.masterId || '', san: o.s ? o.s.san : 0 });
+          servant: o.servantId || '', master: o.masterId || '', san: o.s ? o.s.san : 0,
+          bond: o.s ? (o.s.bond || 0) : 0 });
       } catch (err) { out.push({ slot: n, empty: true }); }
     });
     return out;
   }
   function deleteSave(n) { try { localStorage.removeItem(slotKey(n)); } catch (e) {} }
-  function hasSave() { try { return !!localStorage.getItem(SAVE_KEY); } catch (e) { return false; } }
-  function clearSave() { try { localStorage.removeItem(SAVE_KEY); } catch (e) {} }
+  function hasSave() {
+    try { return !!(localStorage.getItem(autoKey()) || localStorage.getItem(SAVE_KEY)); } catch (e) { return false; }
+  }
+  function clearSave() {
+    try { localStorage.removeItem(SAVE_KEY); localStorage.removeItem(autoKey()); } catch (e) {}
+  }
 
   window.GRAIL.Engine = {
     d: d, pick: pick, clamp: clamp,
@@ -295,8 +385,10 @@
     state: function () { return S; },
     setState: function (o) { S = o; },
     skillValue: skillValue, roll: roll, apply: apply,
-    roman: roman, flagLabel: flagLabel,
+    roman: roman, flagLabel: flagLabel, flagNote: flagNote,
+    sanTier: sanTier, sanTierNow: currentSanTier, SAN_FX: SAN_FX,
     save: save, load: load, hasSave: hasSave, clearSave: clearSave,
+    autosave: autosave, autoKey: autoKey,
     listSaves: listSaves, deleteSave: deleteSave, slotKey: slotKey,
     addLog: function (t) { if (S) S.log.push(t); }
   };
