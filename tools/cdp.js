@@ -425,6 +425,12 @@ const FLOW = `
       await sleep(900);
       L.push('reader: ' + await c.eval("JSON.stringify({head: (document.querySelector('.tl-hl b')||{}).textContent, idx: (document.querySelector('.tl-idx')||{}).textContent, paras: document.querySelectorAll('.tl-p').length, cues: document.querySelectorAll('.tl-cue').length, err: ((document.getElementById('errbox')||{}).textContent||'none').slice(0,300)})"));
       await c.shot(path.join(ROOT, 'tools', 't_tl_reader.png'));
+      /* 翻章后必须回到新章开头 */
+      await c.eval("(function(){var r=document.querySelector('#tl-reader'); r.scrollTop = r.scrollHeight; return r.scrollTop;})()");
+      await sleep(200);
+      await c.eval("document.querySelector('#tl-next').click(); 1");
+      await sleep(500);
+      console.log('after next ch: ' + await c.eval("JSON.stringify({top: document.querySelector('#tl-reader').scrollTop, head: (document.querySelector('.tl-hl b')||{}).textContent})"));
       /* 跳到第六章（有对轰那一段） */
       await c.eval("document.querySelector('#tl-toc').click(); 1");
       await sleep(300);

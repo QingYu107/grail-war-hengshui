@@ -179,6 +179,10 @@
     if (reader._onScroll) { reader.removeEventListener('scroll', reader._onScroll); reader._onScroll = null; }
     reader.innerHTML = chapterHTML(eid, ch);
     reader.classList.add('on');
+    /* 换章一定要回到开头：innerHTML 换了之后 scrollTop 会沿用上一章的值，
+       新章比旧章短的话就被压到底部——表现成「翻到下一章却停在末尾」。 */
+    reader.scrollTop = 0;
+    setTimeout(function () { if (reader.isConnected) reader.scrollTop = 0; }, 0);
 
     var body = reader.querySelector('#tl-body');
     var items = L.chapters[ch].text || [];
