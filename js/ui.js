@@ -719,8 +719,10 @@
     /* 错位召唤：进房间那一张召唤卡照常播——正常的那一骑、正常的契约成立。
        撕开是在卡片自己身上发生的（avg.js 的 missummon），这里只负责把两张牌给它。 */
     if (cfg.kind === 'summon' && (slot.id === 'p3' || slot.id === 'p3m') && st.s.flags.misfit && st.affinity && st.affinity.misfitFrom) {
-      var fsv = G.servant(st.affinity.misfitFrom);
-      var tsv = G.servant(st.s.servantId);
+      /* servantId 在 state 顶层，不在 st.s 里（这个坑踩过四次了，这次加兜底） */
+      var tsv = G.servant(st.servantId);
+      var fsv = G.servant(st.affinity.misfitFrom) || tsv;
+      if (!tsv || !fsv) return { cfg: cfg, data: data, key: key, st: st };
       data = {
         from: { cls: fsv.cls, name: fsv.name, sub: fsv.one || '' },
         to: { cls: tsv.cls, name: tsv.name, sub: tsv.one || '' },
@@ -1979,7 +1981,7 @@
         return;
       }
       var n3 = E.apply({ san: 1, bond: bondLevel(st) < 3 ? 1 : 0 });
-      E.addLog('你在走廊尽头陪 ' + G.servant(st.s.servantId).cls + ' 站了一会儿。');
+      E.addLog('你在走廊尽头陪 ' + (G.servant(st.servantId) || {}).cls + ' 站了一会儿。');
       renderBeat({
         o: {}, paras: [
           '你在走廊尽头站着。他没说话，也没让你回去。',
