@@ -266,11 +266,33 @@
       }, (data.hit || 1150) + 1500);
       schedule(data.dur || 7600, done);
     } else if (kind === 'clash') {
-      /* 宝具对轰：两块真名牌从左右压进来，撞在中间。
-         两边的曲子在这里只放一次（whoever 先起），所以这里不接管 BGM，
-         除非 data.bgm 明说要换——时间线阅读器就是这么用的。 */
-      /* 两段：先放「你这边的从者」的主题，撞上的那一刻再切战斗曲。
-         对轰要的是先认出自己那一位，然后世界炸开。 */
+      /* 三段式对轰。每一段只渲染一张卡，用替换而不是叠加——
+         这样永远不会出现两层字挤在同一个位置。 */
+      var L = data.left || {}, R = data.right || {};
+      function cardHTML(o, side) {
+        o = o || {};
+        var tint = o.color || (side === 'a' ? '#b23a2e' : '#8a6a2a');
+        return '<div class="dl dl-' + side + '" style="--sig:' + tint + '">' +
+          '<b class="dlmark">' + String(o.cls || '').slice(0, 1) + '</b>' +
+          '<div class="dlk">真名解放 ／ TRUE NAME</div>' +
+          '<div class="dlc">' + (o.cls || '—') + '</div>' +
+          '<div class="dln">' + (o.name || '—') + '</div>' +
+          '<div class="dls">' + (o.who || '') + '</div>' +
+          '<div class="dlbar"><i></i></div>' +
+          '</div>';
+      }
+      function pairHTML() {
+        return '<div class="dl-pair">' +
+          '<div class="chalf l" style="--sig:' + (L.color || '#b23a2e') + '">' +
+          '<div class="ck">真名解放</div><div class="cc">' + (L.cls || '') + '</div>' +
+          '<div class="cn">' + (L.name || '') + '</div><div class="cw">' + (L.who || '') + '</div></div>' +
+          '<div class="chalf r" style="--sig:' + (R.color || '#8a6a2a') + '">' +
+          '<div class="ck">真名解放</div><div class="cc">' + (R.cls || '') + '</div>' +
+          '<div class="cn">' + (R.name || '') + '</div><div class="cw">' + (R.who || '') + '</div></div>' +
+          '<div class="cseam"></div><div class="ccore"></div><div class="cfuse"></div>' +
+          '<div class="cwave"><i></i><i></i><i></i></div><div class="crack"></div><div class="cflash"></div>' +
+          '</div>';
+      }
       try {
         if (window.GrailAudio) {
           window.GrailAudio.init && window.GrailAudio.init();
@@ -279,33 +301,46 @@
         }
       } catch (e) {}
       el = ensureLayer('fx-clash');
-      var L = data.left || {}, R = data.right || {};
-      function half(side, o) {
-        return '<div class="chalf ' + side + '" style="--sig:' + (o.color || (side === 'l' ? '#b23a2e' : '#8a6a2a')) + '">' +
-          '<div class="ck">' + (o.k || '真名解放') + '</div>' +
-          '<div class="cc">' + (o.cls || '') + '</div>' +
-          '<div class="cn">' + (o.name || '') + '</div>' +
-          '<div class="cw">' + (o.who || '') + '</div>' +
-          '</div>';
-      }
       el.innerHTML =
-        half('l', L) + half('r', R) +
-        '<div class="cseam"></div><div class="ccore"></div><div class="cfuse"></div><div class="cwave"><i></i><i></i><i></i></div>' +
-        '<div class="cflash"></div>' +
+        '<div class="duel">' +
+        '<div class="stage" id="duel-stage">' + cardHTML(L, 'a') + '</div>' +
         '<div class="cverdict">' + (data.verdict || '') + '</div>' +
-        '<div class="hint">点击任意处继续</div>';
+        '<div class="hint">点击任意处继续</div>' +
+        '</div>';
+      el.classList.add('st-a');
+      var stage = el.querySelector('#duel-stage');
+      var t1 = data.t1 || 2400;
+      var t2 = data.t2 || 2400;
       setTimeout(function () {
-        if (!el || !el.isConnected) return;
-        el.classList.add('clashed');
-        if (!fxLite()) el.classList.add('shake');
-        try { if (window.GrailSFX && window.GrailSFX.boom) window.GrailSFX.boom(); } catch (e) {}
+        if (!el || !el.isConnected || !stage) return;
+        stage.innerHTML = cardHTML(R, 'b');
+        el.classList.remove('st-a'); el.classList.add('st-b');
+        try {
+          if (window.GrailAudio) {
+            if (data.foeTheme) window.GrailAudio.play(data.foeTheme, { quick: true });
+            else if (data.bgm) window.GrailAudio.play(data.bgm, { quick: true });
+          }
+        } catch (e) {}
+      }, t1);
+      setTimeout(function () {
+        if (!el || !el.isConnected || !stage) return;
+        stage.innerHTML = pairHTML();
+        el.classList.remove('st-b'); el.classList.add('st-c');
         try {
           if (window.GrailAudio && data.bgm) {
             (window.GrailAudio.replay || window.GrailAudio.play)(data.bgm, { quick: true });
           }
         } catch (e) {}
-      }, data.hit || 1500);
-      schedule(data.dur || 4600, done);
+      }, t1 + t2);
+      setTimeout(function () {
+        if (!el || !el.isConnected) return;
+        el.classList.add('st-d');
+        if (!fxLite()) el.classList.add('shake');
+        try { if (window.GrailSFX && window.GrailSFX.boom) window.GrailSFX.boom(); } catch (e) {}
+        try { if (window.GrailSFX && window.GrailSFX.clang) window.GrailSFX.clang(); } catch (e) {}
+      }, t1 + t2 + 900);
+      setTimeout(function () { if (el && el.isConnected) el.classList.add('st-e'); }, t1 + t2 + 1900);
+      schedule(data.dur || (t1 + t2 + 4600), done);
     } else if (kind === 'noble') {
       /* 真名解放：曲子必须在卡出现的同一帧起，不能等演出结束再由调用方接上。 */
       try {

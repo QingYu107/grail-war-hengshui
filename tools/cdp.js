@@ -523,6 +523,41 @@ const FLOW = `
       await c.shot(path.join(ROOT, 'tools', 't_clash_m2.png'));
       console.log('clash mobile ok');
       c.ws.close();
+    } else if (mode === 'dueltrace') {
+      const c = await openPage(BASE + '#dev=clash', 1100, 900, false);
+      for (let i = 0; i < 14; i++) {
+        const t = await c.eval("JSON.stringify({cls:((document.querySelector('.fx-clash')||{}).className||'-'), stage:((document.querySelector('#duel-stage')||{}).innerHTML||'').replace(/<[^>]+>/g,' ').replace(/\\s+/g,' ').trim().slice(0,50)})");
+        console.log((i * 600) + 'ms ' + t);
+        await sleep(600);
+      }
+      c.ws.close();
+    } else if (mode === 'duel') {
+      const waitCls = async (c, sub, tries) => {
+        for (let i = 0; i < tries; i++) {
+          const s = await c.eval("((document.querySelector('.fx-clash')||{}).className||'')");
+          if (String(s).indexOf(sub) >= 0) return true;
+          await sleep(120);
+        }
+        return false;
+      };
+      const c = await openPage(BASE + '#dev=clash', 1180, 900, false);
+      await waitCls(c, 'st-a', 30);
+      await sleep(700);
+      await c.shot(path.join(ROOT, 'tools', 't_duel_a.png'));
+      await waitCls(c, 'st-b', 40);
+      await sleep(600);
+      await c.shot(path.join(ROOT, 'tools', 't_duel_b.png'));
+      await waitCls(c, 'st-c', 40);
+      await sleep(500);
+      await c.shot(path.join(ROOT, 'tools', 't_duel_c.png'));
+      await waitCls(c, 'st-d', 40);
+      await sleep(280);
+      await c.shot(path.join(ROOT, 'tools', 't_duel_d.png'));
+      await waitCls(c, 'st-e', 40);
+      await sleep(900);
+      await c.shot(path.join(ROOT, 'tools', 't_duel_e.png'));
+      console.log('duel stages captured');
+      c.ws.close();
     } else if (mode === 'msum') {
       /* 错位召唤撕裂演出：正常 → 撕开 → 换人 三帧 */
       const c = await openPage(BASE + '#dev=missum', 1100, 1000, false);

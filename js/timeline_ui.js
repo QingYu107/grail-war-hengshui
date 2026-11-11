@@ -251,7 +251,14 @@
         delete c.node.dataset.playing;
       };
       try {
-        window.GrailAVG.stinger(c.item.fx, c.item, done);
+        /* 小说里的对轰节奏收短一点：读者是来看文的，不是来看片的 */
+        var payload = c.item;
+        if (c.item.fx === 'clash' && !c.item.t1) {
+          payload = {};
+          Object.keys(c.item).forEach(function (k) { payload[k] = c.item[k]; });
+          payload.t1 = 1400; payload.t2 = 1400; payload.dur = 7400;
+        }
+        window.GrailAVG.stinger(c.item.fx, payload, done);
       } catch (e) { state.busy = false; done(); }
     }
     function tryFire(c, idx) {

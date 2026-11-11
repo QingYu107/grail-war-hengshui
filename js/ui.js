@@ -1321,7 +1321,7 @@
       }
       if (window.GrailAVG && window.GrailAVG.stinger) {
         window.GrailAVG.stinger('clash', {
-          bgm: 'battle', fromTheme: me.theme, hit: 1500, dur: 4600,
+          bgm: 'battle', fromTheme: me.theme, foeTheme: foe.theme, t1: 2600, t2: 2600, dur: 9200,
           left: { cls: me.cls, name: myName, who: me.name + ' ／ 你的从者', color: me.tint || '#8f2b22' },
           right: { cls: foe.cls, name: foeName, who: foe.name, color: foe.tint || '#8a6a2a' },
           verdict: '两件宝具在同一个高度撞上。'
@@ -3053,7 +3053,7 @@
       E.create(preset); screen('screen-game'); renderSlot();
       setTimeout(function () {
         window.GrailAVG.stinger('clash', {
-          bgm: 'battle', hit: 1200, dur: 6000,
+          bgm: 'battle', fromTheme: 'saber', foeTheme: 'ruler', t1: 2400, t2: 2400, dur: 9000,
           left: { cls: 'SABER', name: '凌晨四点的洛杉矶', who: '科比 · 江野', color: '#8f2b22' },
           right: { cls: 'RULER', name: '这一切都是孙笑川干的', who: '孙笑川 · 赵铁柱', color: '#8a6a2a' },
           verdict: '两块东西撞在一起的时候，没有声音。'
