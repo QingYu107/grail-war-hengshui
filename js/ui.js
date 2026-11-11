@@ -378,10 +378,14 @@
         '<span>' + (got ? esc(e.en || '') : '未解锁') + (got > 1 ? '　×' + got : '') + '</span></div>';
     }).join('');
     var svIds = Object.keys(a.servants || {});
+    /* 彩蛋：同行过的从者，名字后面有一个几乎看不见的点。
+       点开才知道那是什么——没走过的人不会去点一个点。 */
     var svLine = svIds.length ? svIds.map(function (id) {
       var s = G.servant(id);
       var b = (a.best || {})[id] || 0;
-      return (s ? s.cls + ' · ' + s.name : id) + (b ? '（羁绊 LV.' + b + '）' : '');
+      var code = s && s.misfit;
+      return '<span class="ac-sv">' + (s ? s.cls + ' · ' + s.name : id) + (b ? '（羁绊 LV.' + b + '）' : '') +
+        (code ? '<i class="ac-seed" data-code="' + code + '" title="？">·</i>' : '') + '</span>';
     }).join('　｜　') : '还没有带走任何一位。';
     var achLine = ACHIEVEMENTS.map(function (ac) {
       var got = !!((a.ach || {})[ac.id]);
@@ -412,6 +416,19 @@
     document.body.appendChild(layer);
     layer.onclick = function (e) { if (e.target === layer) layer.remove(); };
     document.getElementById('ac-close').onclick = function () { layer.remove(); };
+    /* 那个点的行为：点一下把它自己变成一串码，再点收回去 */
+    layer.addEventListener('click', function (e) {
+      var t = e.target;
+      if (!t || !t.classList || !t.classList.contains('ac-seed')) return;
+      var wrap = t.parentNode;
+      if (!wrap) return;
+      var open = wrap.querySelector('.ac-code');
+      if (open) { open.remove(); return; }
+      var em = document.createElement('em');
+      em.className = 'ac-code';
+      em.textContent = t.getAttribute('data-code') || '';
+      wrap.appendChild(em);
+    });
     /* 两个标签：图鉴 / 时间线 */
     var tlMounted = false;
     layer.querySelectorAll('.ac-tab').forEach(function (b) {
@@ -3029,6 +3046,21 @@
         openArchive();
         var tab = document.querySelector('.ac-tab[data-pane="tl"]');
         if (tab) tab.click();
+      }, 300);
+    } else if (m[1] === 'arcseed') {
+      var ar = readArchive();
+      ar.endings = ar.endings || {};
+      ['E1','E2','E3','E4','E5','E6','E7','E8','E9','E10','E11'].forEach(function (id) { ar.endings[id] = ar.endings[id] || 1; });
+      ar.servants = { saber: 2, archer: 1, caster: 3, ruler: 1 };
+      ar.best = { saber: 3, archer: 1, caster: 2, ruler: 1 };
+      ar.cleared = 4; ar.ach = ar.ach || {};
+      writeArchive(ar);
+      setTimeout(function () {
+        openArchive();
+        setTimeout(function () {
+          var sd = document.querySelector('.ac-seed');
+          if (sd) sd.click();
+        }, 320);
       }, 300);
     } else if (m[1] === 'tllock') {
       /* 未解锁的样子：清掉结局数 */

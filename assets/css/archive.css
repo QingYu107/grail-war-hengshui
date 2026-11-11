@@ -739,3 +739,22 @@ html {
 /* 档案夹 / 模态框内部的滚动条 */
 .modal::-webkit-scrollbar { width: 7px; }
 .modal::-webkit-scrollbar-track { background: transparent; border-left: 0; }
+
+/* ---------- 档案馆彩蛋：同行过的从者名字后面那个点 ----------
+   默认几乎看不见，悬停才亮；点开是一串答案。 */
+.ac-sv { display: inline-block; white-space: nowrap; }
+.ac-seed {
+  font-style: normal; font-family: var(--mono); font-size: 13px; line-height: 1;
+  color: var(--ink-3); opacity: .32; cursor: pointer; padding: 0 3px;
+  transition: opacity .18s, color .18s, transform .18s;
+  user-select: none;
+}
+.ac-seed:hover { opacity: 1; color: var(--red); transform: translateY(-1px); }
+.ac-code {
+  display: inline-block; margin-left: 5px; padding: 1px 6px;
+  font-style: normal; font-family: var(--mono); font-size: 10px; letter-spacing: .12em;
+  color: #8c1a12; background: rgba(140, 43, 34, .08);
+  border: 1px dashed rgba(140, 43, 34, .35);
+  animation: acCodeIn .28s ease both;
+}
+@keyframes acCodeIn { from { opacity: 0; transform: translateY(-2px) } to { opacity: 1; transform: none } }

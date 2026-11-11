@@ -28,7 +28,7 @@
       weakness: ['把球传给我', '任何人当面说出这句话，他须 POW 困难检定。失败则本回合被迫做一次「协作」动作，无法攻击，且露出灵核（对其灵核攻击伤害 ×2）。'],
       play: ['他说话极短，从不超过两句。', '他从不解释自己在干什么。', '他对御主没有感情，只有「你配不配」这一个判断标准。'],
       quotes: ['「你见过凌晨四点的洛杉矶吗？」', '「传球？……那是什么东西。」', '「我不需要你喜欢我。我需要你输。」', '「曼巴 out。」'],
-      theme: 'saber', portrait: 'assets/img/servant_saber.jpg', tint: '#8f2b22'
+      theme: 'saber', misfit: 'BACBCAADBBBBACC', portrait: 'assets/img/servant_saber.jpg', tint: '#8f2b22'
     },
     {
       id: 'archer', cls: 'ARCHER', cn: '弓', name: '张雪峰', en: 'Zhang Xuefeng',
@@ -55,7 +55,7 @@
       weakness: ['你自己上的是什么大学？', '当面问他这个问题，他须 POW 检定。失败则本回合卡壳、无法行动，并会不由自主地开始解释（暴露位置与战术意图 1 轮）。他知道所有的路，但他自己一直在跑。'],
       play: ['语速极快，一句话里塞三个数字。', '他真心相信自己在帮人，这是他最恐怖的地方。', '他从不承认自己累。'],
       quotes: ['「你这个分数，你告诉我你能上什么？」', '「别问，问就是复读。」', '「我不是在吓你，我是在救你——你懂吗？」', '「喝口雪碧，歇会儿。」'],
-      theme: 'archer', portrait: 'assets/img/servant_archer.jpg', tint: '#8a6a2a'
+      theme: 'archer', misfit: 'CCBCBBBBDDBBAAA', portrait: 'assets/img/servant_archer.jpg', tint: '#8a6a2a'
     },
     {
       id: 'lancer', cls: 'LANCER', cn: '枪', name: '侯国玉（Otto）', en: 'Otto',
@@ -81,7 +81,7 @@
       weakness: ['Alt + F4', '任何人在他面前按下这个组合，他须 POW 困难检定。失败则「掉线」：全部宝具封印 1 小时，期间不停地说「不是，这把我真没送」。一个人可以被永远地关闭，只要有人记得那个快捷键。'],
       play: ['他说话全是游戏术语，把现实当成对局。', '嘴上不服软，行动上永远第一个冲。', '他对御主的称呼是「老板」或「队友」，从来不叫名字。'],
       quotes: ['「我是电棍。」', '「666。」', '「你这个操作我是真看不懂。」', '「行吧，这把输了。下把，下把带你们赢。」'],
-      theme: 'lancer', portrait: 'assets/img/servant_lancer.jpg', tint: '#2f5d7a'
+      theme: 'lancer', misfit: 'CABACABDCDABCBD', portrait: 'assets/img/servant_lancer.jpg', tint: '#2f5d7a'
     },
     {
       id: 'rider', cls: 'RIDER', cn: '骑', name: '范小勤', en: 'Fan Xiaoqin',
@@ -107,7 +107,7 @@
       weakness: ['你去上学吧', '当有人认真地（不是嘲笑，不是敷衍）对他说出这句话，他须 POW 困难检定。失败则停止攻击 1D3 轮，脸上出现一种「人」的神情。这是他唯一会说的话要出口的前兆：「我想上学。」'],
       play: ['所有笑点必须来自「大人」，绝不能来自他。', '不要用「蠢」来演他，用「不参与」来演他。', '他是这个模组里最安静的暴力。'],
       quotes: ['「挖掘机，挖挖挖。」', '「（沉默）」', '「（把一台挖掘机停在教室门口，自己爬下来，看着黑板）」', '「我想上学。」'],
-      theme: 'rider', portrait: 'assets/img/servant_rider.jpg', tint: '#7a6a1f'
+      theme: 'rider', misfit: 'AACCBCDDBCCBDBB', portrait: 'assets/img/servant_rider.jpg', tint: '#7a6a1f'
     },
     {
       id: 'caster', cls: 'CASTER', cn: '术', name: '马保国', en: 'Ma Baoguo',
@@ -134,7 +134,7 @@
       weakness: ['你打的是假拳', '当面拆穿他，他须 POW 困难检定。失败则「自我暗示」失效 1 小时，全部宝具 MP 消耗翻倍，并开始小声辩解（暴露位置 1 轮）。最怕的不是被打，是被看穿。'],
       play: ['他永远在讲解，永远在收徒。', '他真的相信自己的功夫——这是他的可怕之处，也是他的可怜之处。', '他被打倒后会站起来再讲一遍。'],
       quotes: ['「年轻人，不讲武德！」', '「我劝这位年轻人，耗子尾汁。」', '「我大意了，没有闪。」', '「……不应该啊。」'],
-      theme: 'caster', portrait: 'assets/img/servant_caster.jpg', tint: '#6a6a3a'
+      theme: 'caster', misfit: 'DCBACDBDAAABCAA', portrait: 'assets/img/servant_caster.jpg', tint: '#6a6a3a'
     },
     {
       id: 'assassin', cls: 'ASSASSIN', cn: '杀', name: '周立齐', en: 'Zhou Liqi',
@@ -160,7 +160,7 @@
       weakness: ['你要不要来上班？', '有人认真地给他提供一份工作（有工资、有岗位、有工牌），他须 POW 困难检定。失败则 1D6 轮无法行动——他陷入了沉思。他会问：「……几点上班？」然后自己回答：「算了。」'],
       play: ['他懒，但从不慌。', '他从不主动攻击——只在别人来抓他的时候动一次手。', '他对御主有一种奇怪的宽容，像是看一个还在上学的自己。'],
       quotes: ['「打工是不可能打工的，这辈子都不可能打工的。」', '「进厂？进厂也是不可能进厂的。」', '「里面个个都是人才，说话又好听，我超喜欢在里面的。」', '「……你那个表的分数，比我高吧。」'],
-      theme: 'assassin', portrait: 'assets/img/servant_assassin.jpg', tint: '#3d4a3a'
+      theme: 'assassin', misfit: 'BCABBBDADDCBDDD', portrait: 'assets/img/servant_assassin.jpg', tint: '#3d4a3a'
     },
     {
       id: 'berserker', cls: 'BERSERKER', cn: '狂', name: '虎哥 ＆ 刀哥', en: 'Hu & Dao',
@@ -187,7 +187,7 @@
       weakness: ['你也就这样了', '当面羞辱虎哥，他须 POW 困难检定。失败则进入无差别狂化 1D3 轮：攻击距离最近的一切单位，包括队友和御主。他最怕的不是被打，是被人说他「不行」。'],
       play: ['虎哥负责吼，刀哥负责做。', '他们从不讨论计划，只讨论「整不整」。', '两个人的对话像一场没完没了的相声，但其中有一句是真的：「哥，你走，我断后。」'],
       quotes: ['「来，小亮，给他整个活儿！」', '「草，走，忽略！」', '「你瞅啥？」「瞅你咋地！」', '「……行了行了，走吧。」'],
-      theme: 'berserker', portrait: 'assets/img/servant_berserker.jpg', tint: '#7a3a2a'
+      theme: 'berserker', misfit: 'ACBBDCCABAABABD', portrait: 'assets/img/servant_berserker.jpg', tint: '#7a3a2a'
     },
     {
       id: 'ruler', cls: 'RULER', cn: '裁', name: '孙笑川', en: 'Sun Xiaochuan',
@@ -213,7 +213,7 @@
       weakness: ['（他没有御主，也没有真名可暴露——他就是规则本身。）', ''],
       play: ['他是情报源头：要真名，得拿「面子」「人情」来换。', '他是节奏调节器：玩家卡死时他出现，扔一条线索，收钱走人。', '不要让他死得太帅。他退场时应该很狼狈，然后所有人都觉得「这事肯定是他干的」。'],
       quotes: ['「这一切都是孙笑川干的。」', '「兄弟们，这个锅我背了。」', '「我是新津的，你晓得不？」', '「你先说，你凭什么。」'],
-      theme: 'ruler', portrait: 'assets/img/servant_ruler.jpg', tint: '#4a3a4a'
+      theme: 'ruler', misfit: 'EADABCCDDAAACBD', portrait: 'assets/img/servant_ruler.jpg', tint: '#4a3a4a'
     },
     {
       id: 'foreigner', cls: 'FOREIGNER', cn: '降', name: '丁真珍珠', en: 'Dingzhen',
@@ -239,7 +239,7 @@
       weakness: ['你自己想要什么？', '有人认真地问他这个问题（不是采访，不是玩梗），他须 POW 困难检定。失败则「一眼」失效 1 小时——他看不见了。他会说：「……我不知道。没有人问过。」'],
       play: ['他是这个模组里唯一不能被玩梗的角色。', '他说话很慢，很少，句句都是直的。', '他不理解为什么别人笑，也不理解为什么别人骂。'],
       quotes: ['「一眼丁真，鉴定为真。」', '「芝士雪豹。」', '「妈妈生的。」', '「……你们为什么要拍我？」'],
-      theme: 'foreigner', portrait: 'assets/img/servant_foreigner.jpg', tint: '#3a5a5a'
+      theme: 'foreigner', misfit: 'ECCABCDABABACAA', portrait: 'assets/img/servant_foreigner.jpg', tint: '#3a5a5a'
     }
   ];
 
