@@ -528,9 +528,9 @@ const FLOW = `
       const c = await openPage(BASE + '#dev=missum', 1100, 1000, false);
       await sleep(1500);
       await c.shot(path.join(ROOT, 'tools', 't_msum_a.png'));
-      await sleep(900);
+      await sleep(1800);
       await c.shot(path.join(ROOT, 'tools', 't_msum_b.png'));
-      await sleep(1400);
+      await sleep(1800);
       await c.shot(path.join(ROOT, 'tools', 't_msum_c.png'));
       const st = await c.eval("JSON.stringify({layer: !!document.querySelector('.fx-missummon'), ripped: !!(document.querySelector('.fx-missummon')||{classList:{contains:()=>false}}).classList.contains('ripped')})");
       console.log('msum: ' + st);

@@ -673,6 +673,12 @@
     }, Math.max(400, ms || 5000));
     return true;
   }
+  /* 从头重放同一首：宝具/对轰要的是「断一下再炸开」，
+     直接 play 同一首会被短路（同一主题已经在播就不重启）。 */
+  function replay(themeId, opts) {
+    stop();
+    return play(themeId, opts);
+  }
   function stop() {
     clearTemp();
     for (var i = layers.length - 1; i >= 0; i--) killLayer(layers[i], false);
@@ -749,7 +755,7 @@
 
   /* ---- 10. 导出 --------------------------------------------------------- */
   global.GrailAudio = {
-    init: init, play: play, playTemp: playTemp, stop: stop,
+    init: init, play: play, replay: replay, playTemp: playTemp, stop: stop,
     setVolume: setVolume, getVolume: getVolume,
     toggleMute: toggleMute, isMuted: isMuted, current: current,
     tracks: tracks, servantTheme: servantTheme,

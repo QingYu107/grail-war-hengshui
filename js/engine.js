@@ -333,9 +333,15 @@
       if (s.bond !== before2) notes.push('羁绊 LV.' + s.bond);
     }
     if (fx.flag) {
-      var fname = typeof fx.flag === 'string' ? fx.flag : Object.keys(fx.flag)[0];
-      var fval = typeof fx.flag === 'string' ? true : fx.flag[fname];
-      s.flags[fname] = fval; notes.push('记录：' + flagNote(fname));
+      /* 支持 {wishWin:true, wishAll:true} 这种一次写多个的写法——
+         以前只取第一个 key，第二个 flag 会被静默丢掉（E10 就是这么死掉的）。 */
+      if (typeof fx.flag === 'string') {
+        s.flags[fx.flag] = true; notes.push('记录：' + flagNote(fx.flag));
+      } else {
+        Object.keys(fx.flag).forEach(function (k) {
+          s.flags[k] = fx.flag[k]; notes.push('记录：' + flagNote(k));
+        });
+      }
     }
     if (fx.allies) { s.allies = clamp(s.allies + fx.allies, 0, 7); notes.push('盟友 ' + (fx.allies > 0 ? '+' : '') + fx.allies); }
     if (fx.kills) { s.kills += fx.kills; notes.push('你动手了'); }

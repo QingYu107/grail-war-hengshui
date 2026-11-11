@@ -83,7 +83,7 @@ function playthrough(picks, mode) {
         continue;
       }
       st.s.day++; st.s.slot = 0;
-      if (st.s.beastCutDay !== p) st.s.beast = Math.min(7, st.s.beast + 1);
+      if (p >= 3 && st.s.beastCutDay !== p) st.s.beast = Math.min(7, st.s.beast + 1);
       continue;
     }
     var opts = slot.options.filter(function (o) {

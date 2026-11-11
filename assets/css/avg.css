@@ -1011,11 +1011,11 @@ body.exp-hot .scene-img::before {
 
 .fx-missummon .mx-a { position: absolute; text-align: center; color: #f2ead9; animation: mxAIn .7s .1s ease both; }
 @keyframes mxAIn { 0% { opacity: 0; transform: translateY(8px) } 100% { opacity: 1; transform: none } }
-.fx-missummon.ripped .mx-a { animation: mxRip .5s cubic-bezier(.2,.9,.2,1) forwards; }
+.fx-missummon.ripped .mx-a { animation: mxRip .18s ease-out forwards; }
 @keyframes mxRip {
   0% { opacity: 1; filter: none }
-  30% { transform: translate(-4px, 2px) skewX(2deg); filter: blur(.6px) hue-rotate(-12deg) }
-  100% { opacity: 0; transform: translate(0, -14px) scaleX(1.14); filter: blur(7px) brightness(.35) }
+  40% { opacity: .8; transform: translate(-5px, 2px) skewX(3deg); filter: blur(1px) hue-rotate(-14deg) brightness(1.6) }
+  100% { opacity: 0; transform: translate(0, -10px) scaleX(1.16); filter: blur(9px) brightness(.3) }
 }
 
 /* 黑从缝里涌出来，盖住原来那张卡 */
@@ -1058,7 +1058,7 @@ body.exp-hot .scene-img::before {
   mask: radial-gradient(circle at 50% 50%, transparent 13vmin, #000 28vmin, #000 46vmin, transparent 62vmin);
   filter: blur(.4px);
 }
-.fx-missummon.ripped .mx-spk { animation: spkIn 1.5s .95s cubic-bezier(.16,.8,.24,1) both; }
+.fx-missummon.ripped .mx-spk { animation: spkIn 1.5s .3s cubic-bezier(.16,.8,.24,1) both; }
 @keyframes spkIn {
   0% { opacity: 0; transform: scale(.55) rotate(-10deg) }
   20% { opacity: 1 }
@@ -1084,11 +1084,13 @@ body.exp-hot .scene-img::before {
   animation: sigSpin 5.1s linear infinite;
 }
 @keyframes sigSpin { from { transform: rotate(0) } to { transform: rotate(360deg) } }
-.fx-missummon.ripped .mx-sig { animation: sigIn .9s 1.15s ease both; }
+.fx-missummon.ripped .mx-sig { animation: sigIn .9s .5s ease both; }
 @keyframes sigIn { 0% { opacity: 0; transform: scale(.35) rotate(-24deg) } 100% { opacity: .8; transform: none } }
 
 /* 名字：一个字一个字扎进来 */
-.fx-missummon .mx-b { position: absolute; z-index: 5; text-align: center; color: #e8d2c8; }
+.fx-missummon .mx-b { position: absolute; z-index: 5; text-align: center; color: #e8d2c8; opacity: 0; }
+.fx-missummon.ripped .mx-b { animation: mxBShow .01s 1.05s both; }
+@keyframes mxBShow { from { opacity: 0 } to { opacity: 1 } }
 .fx-missummon .mx-b .mx-k { color: #ff4a34; }
 .fx-missummon .mx-b .mx-c { color: rgba(255,74,52,.85); }
 .fx-missummon .mx-b .mx-n {
@@ -1097,7 +1099,7 @@ body.exp-hot .scene-img::before {
 }
 .fx-missummon .mx-b .mx-n span {
   display: inline-block; opacity: 0;
-  animation: stabIn .42s calc(1.4s + var(--i) * .075s) cubic-bezier(.2,.9,.2,1) both;
+  animation: stabIn .42s calc(1.15s + var(--i) * .075s) cubic-bezier(.2,.9,.2,1) both;
 }
 @keyframes stabIn {
   0% { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1.7); filter: blur(5px) brightness(2) }
@@ -1110,7 +1112,7 @@ body.exp-hot .scene-img::before {
   font-family: var(--hei); font-size: 13px; letter-spacing: .34em; color: rgba(255,120,96,.85);
   opacity: 0;
 }
-.fx-missummon.ripped .mx-line { animation: mxAIn .9s 2.7s ease both; }
+.fx-missummon.ripped .mx-line { animation: mxAIn .9s 2.15s ease both; }
 .fx-missummon .hint {
   position: absolute; bottom: 6vh; left: 0; right: 0; text-align: center; z-index: 6;
   font-family: var(--hei); font-size: 10.5px; letter-spacing: .3em; color: rgba(232,224,204,.25);
@@ -1219,3 +1221,22 @@ body.exp-hot .scene-img::before {
   .fx-clash .cverdict { bottom: 7vh; font-size: 11px; letter-spacing: .16em; }
   .fx-clash .hint { bottom: 2.4vh; }
 }
+
+/* 正常召唤那一段：给一个光轮，让玩家真的以为契约成立了 */
+.fx-missummon .mx-ring {
+  position: absolute; z-index: 1; pointer-events: none;
+  width: 44vmin; height: 44vmin; border-radius: 50%;
+  border: 1px solid rgba(232,224,204,.22);
+  box-shadow: inset 0 0 48px rgba(232,224,204,.1), 0 0 60px rgba(232,224,204,.08);
+  animation: ringSpin 9s linear infinite, ringBreath 2.8s ease-in-out infinite;
+}
+.fx-missummon .mx-ring::before,
+.fx-missummon .mx-ring::after {
+  content: ''; position: absolute; inset: 12%;
+  border-radius: 50%; border: 1px dashed rgba(232,224,204,.14);
+}
+.fx-missummon .mx-ring::after { inset: 26%; border-style: solid; border-color: rgba(232,224,204,.1); }
+@keyframes ringSpin { from { transform: rotate(0) } to { transform: rotate(360deg) } }
+@keyframes ringBreath { 0%,100% { opacity: .55 } 50% { opacity: .95 } }
+.fx-missummon.ripped .mx-ring { animation: ringDie .5s ease both; }
+@keyframes ringDie { 0% { opacity: .95; transform: scale(1) } 100% { opacity: 0; transform: scale(1.3) } }

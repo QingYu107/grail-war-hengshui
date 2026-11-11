@@ -209,10 +209,12 @@
     } else if (kind === 'missummon') {
       /* 错位召唤：先给你看一张正常的契约卡，一秒钟以后从中间撕开。
          不提前说、不预告，撕裂那一刻才换人。 */
+      /* 一开始响的是「本该召到的那一骑」的主题——玩家会以为契约成立。
+         撕开之后才换成真的那一个。音乐先骗人，画面再拆穿。 */
       try {
         if (window.GrailAudio) {
           window.GrailAudio.init && window.GrailAudio.init();
-          if (data.theme) window.GrailAudio.play(data.theme, { quick: true });
+          if (data.fromTheme) window.GrailAudio.play(data.fromTheme, { quick: true });
         }
       } catch (e) {}
       el = ensureLayer('fx-missummon');
@@ -227,6 +229,7 @@
       }).join('');
       el.innerHTML =
         '<div class="mx">' +
+        '<div class="mx-ring"></div>' +
         '<div class="mx-a">' +
         '<div class="mx-k">CONTRACT ／ 契约成立</div>' +
         '<div class="mx-c">' + (A.cls || '') + '</div>' +
@@ -251,14 +254,17 @@
         if (!fxLite()) el.classList.add('quake');
         try { if (window.GrailSFX && window.GrailSFX.boom) window.GrailSFX.boom(); } catch (e) {}
         try { if (window.GrailSFX && window.GrailSFX.clang) window.GrailSFX.clang(); } catch (e) {}
-      }, data.hit || 1150);
+        setTimeout(function () {
+          try { if (window.GrailAudio && data.theme) window.GrailAudio.play(data.theme, { quick: true }); } catch (e) {}
+        }, 900);
+      }, data.hit || 2600);
       setTimeout(function () {
         try { if (window.GrailSFX && window.GrailSFX.glitch) window.GrailSFX.glitch(); } catch (e) {}
       }, (data.hit || 1150) + 260);
       setTimeout(function () {
         try { if (window.GrailSFX && window.GrailSFX.heartbeat) window.GrailSFX.heartbeat(); } catch (e) {}
       }, (data.hit || 1150) + 1500);
-      schedule(data.dur || 6200, done);
+      schedule(data.dur || 7600, done);
     } else if (kind === 'clash') {
       /* 宝具对轰：两块真名牌从左右压进来，撞在中间。
          两边的曲子在这里只放一次（whoever 先起），所以这里不接管 BGM，

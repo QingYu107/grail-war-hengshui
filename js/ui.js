@@ -707,7 +707,10 @@
       data = {
         from: { cls: fsv.cls, name: fsv.name, sub: fsv.one || '' },
         to: { cls: tsv.cls, name: tsv.name, sub: tsv.one || '' },
+        fromTheme: fsv.theme,
         theme: tsv.theme,
+        hit: 2600,
+        dur: 7600,
         line: '「你叫错了。」'
       };
       return { cfg: { kind: 'missummon' }, data: data, key: key, st: st };
@@ -1314,7 +1317,7 @@
     try {
       if (window.GrailAudio) {
         window.GrailAudio.init && window.GrailAudio.init();
-        window.GrailAudio.play('battle', { quick: true });
+        (window.GrailAudio.replay || window.GrailAudio.play)('battle', { quick: true });
       }
       if (window.GrailAVG && window.GrailAVG.stinger) {
         window.GrailAVG.stinger('clash', {
@@ -1398,7 +1401,7 @@
       var theme = sv && sv.theme;
       if (window.GrailAudio) {
         window.GrailAudio.init && window.GrailAudio.init();
-        if (theme) window.GrailAudio.play(theme, { quick: true });
+        if (theme) (window.GrailAudio.replay || window.GrailAudio.play)(theme, { quick: true });
       }
       if (window.GrailAVG && window.GrailAVG.stinger) {
         window.GrailAVG.stinger('noble', {
@@ -2245,7 +2248,7 @@
         E.addLog('你睡了一觉。HP +' + hpBack + '，MP +' + mpBack + '。');
       }
       // 夜晚填格：这一天如果你什么都没踩住，就 +1（序章之夜不计）
-      if (prevDay >= 1 && st.s.beastCutDay !== prevDay) {
+      if (prevDay >= 3 && st.s.beastCutDay !== prevDay) {
         st.s.beast = Math.min(7, st.s.beast + 1);
         E.addLog('Day ' + prevDay + ' 结束：兽进度 +1（当前 ' + st.s.beast + '/7）');
       } else if (prevDay >= 1) {
@@ -3065,7 +3068,7 @@
         window.GrailAVG.stinger('missummon', {
           from: { cls: 'SABER', name: '科比·比恩·布莱恩特', sub: '湖人队最强的剑，凌晨四点起床的偏执狂' },
           to: { cls: 'BERSERKER', name: '虎哥 ＆ 刀哥', sub: '整活二人组，用吵闹掩盖难过' },
-          theme: 'berserker', line: '「你叫错了。」', hit: 1200, dur: 7000
+          fromTheme: 'saber', theme: 'berserker', line: '「你叫错了。」', hit: 2600, dur: 7600
         }, function () {});
       }, 400);
     } else if (m[1] === 'misfit') {

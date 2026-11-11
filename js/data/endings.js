@@ -174,7 +174,7 @@
     var wish = !!f.wishWin;
 
     if (wish) {
-      if (s.masterId === 'zoulijun' && f.wishAll) return 'E10';
+      if ((s.masterId === 'zoulijun' || s.masterId === 'zhaotiezhu') && f.wishAll) return 'E10';
       if (s.servantId === 'assassin' && st.kills === 0 && f.assassinAlive) return 'E11';
       return 'E1';
     }
