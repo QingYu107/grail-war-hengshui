@@ -1321,7 +1321,7 @@
       }
       if (window.GrailAVG && window.GrailAVG.stinger) {
         window.GrailAVG.stinger('clash', {
-          bgm: 'battle', hit: 1500, dur: 4600,
+          bgm: 'battle', fromTheme: me.theme, hit: 1500, dur: 4600,
           left: { cls: me.cls, name: myName, who: me.name + ' ／ 你的从者', color: me.tint || '#8f2b22' },
           right: { cls: foe.cls, name: foeName, who: foe.name, color: foe.tint || '#8a6a2a' },
           verdict: '两件宝具在同一个高度撞上。'

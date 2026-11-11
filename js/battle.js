@@ -194,6 +194,8 @@
     /* 敌方一手 */
     function foeTurn() {
       if (B.over) return;
+      /* 你放宝具的时候它被逼应战：这一手直接算宝具，于是两边撞上 */
+      if (B.forceFoeNoble && !B.foeNobleDone) { B.intent = 'noble'; B.forceFoeNoble = false; }
       var intent = B.intent;
       var pct = 1;
       if (intent === 'strike') {
@@ -340,9 +342,13 @@
         if (B.stagger >= CFG.staggerMax) { nd += 8; B.stagger = 0; }
         B.foeHp -= nd;
         say('光把走廊照白了。' + foe.cls + ' HP −' + nd + '。', 'good');
-        /* 对轰：它这一手也是宝具，就不要再放两张单独的卡了 */
-        var willClash = (B.intent === 'noble') && !B.foeNobleDone;
-        if (willClash) B.clashTurn = true;
+        /* 对轰：它这一手本来也是宝具，或者被这一发逼得应战——都算对轰 */
+        var canCounter = !B.foeNobleDone && foePct() < 0.7 && rnd() < 0.62;
+        var willClash = ((B.intent === 'noble') || canCounter) && !B.foeNobleDone;
+        if (willClash) {
+          B.clashTurn = true;
+          B.forceFoeNoble = true;      // 让对手这一手直接应一发
+        }
         pushFx({ t: 'noble', dmg: nd });
         if (willClash) {
           var fnp = (foe.noble && foe.noble[0]) || ['宝具'];

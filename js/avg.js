@@ -269,10 +269,13 @@
       /* 宝具对轰：两块真名牌从左右压进来，撞在中间。
          两边的曲子在这里只放一次（whoever 先起），所以这里不接管 BGM，
          除非 data.bgm 明说要换——时间线阅读器就是这么用的。 */
+      /* 两段：先放「你这边的从者」的主题，撞上的那一刻再切战斗曲。
+         对轰要的是先认出自己那一位，然后世界炸开。 */
       try {
         if (window.GrailAudio) {
           window.GrailAudio.init && window.GrailAudio.init();
-          if (data.bgm) window.GrailAudio.play(data.bgm, { quick: true });
+          if (data.fromTheme) window.GrailAudio.play(data.fromTheme, { quick: true });
+          else if (data.bgm) window.GrailAudio.play(data.bgm, { quick: true });
         }
       } catch (e) {}
       el = ensureLayer('fx-clash');
@@ -296,6 +299,11 @@
         el.classList.add('clashed');
         if (!fxLite()) el.classList.add('shake');
         try { if (window.GrailSFX && window.GrailSFX.boom) window.GrailSFX.boom(); } catch (e) {}
+        try {
+          if (window.GrailAudio && data.bgm) {
+            (window.GrailAudio.replay || window.GrailAudio.play)(data.bgm, { quick: true });
+          }
+        } catch (e) {}
       }, data.hit || 1500);
       schedule(data.dur || 4600, done);
     } else if (kind === 'noble') {
