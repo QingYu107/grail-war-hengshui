@@ -163,6 +163,8 @@
       schedule(700 + (data.lines || []).length * 520, done);
     } else if (kind === 'summon') {
       el = ensureLayer('fx-summon');
+      setTimeout(function () { try { if (window.GrailSFX && window.GrailSFX.success) window.GrailSFX.success(); } catch (e) {} }, 420);
+      setTimeout(function () { try { if (window.GrailSFX && window.GrailSFX.boom) window.GrailSFX.boom(); } catch (e) {} }, 980);
       var S = (window.GRAIL_SUMMON || {})[data.id] || {};
       var lines = S.lines || ['「你就是我的御主？」'];
       var col = S.color || '#b23a2e';
@@ -372,6 +374,9 @@
       schedule(data.dur || 3400, done);
     } else if (kind === 'beast') {
       el = ensureLayer('fx-beast');
+      setTimeout(function () { try { if (window.GrailSFX && window.GrailSFX.heartbeat) window.GrailSFX.heartbeat(); } catch (e) {} }, 300);
+      setTimeout(function () { try { if (window.GrailSFX && window.GrailSFX.boom) window.GrailSFX.boom(); } catch (e) {} }, 1100);
+      setTimeout(function () { try { if (window.GrailSFX && window.GrailSFX.heartbeat) window.GrailSFX.heartbeat(); } catch (e) {} }, 2400);
       var title = data.title || '攀比';
       // 一片一直在往下滚的名次，用来做「所有人都在排队」的底噪
       var ranks = '';
